@@ -48,7 +48,7 @@ jacocoTestReport {
 sonarqube {
 	properties {
 		property 'sonar.projectName', 'Food delivery app'
-		property 'sonar.projectKey', 'wkrzywiec_food-delivery'
+		property 'sonar.projectKey', 'wkrzywiec_food-delivery-app'
 		property 'sonar.organization', 'wkrzywiec'
 	}
 }

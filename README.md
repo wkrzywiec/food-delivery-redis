@@ -1,1 +1,2 @@
 # Food Delivery Service
+[![Build & test food-delivery service](https://github.com/wkrzywiec/food-delivery-app/actions/workflows/gradle.yaml/badge.svg)](https://github.com/wkrzywiec/food-delivery-app/actions/workflows/gradle.yaml)

@@ -1,4 +1,4 @@
-name: Test (feature branch)
+name: Test - feature branch
 on:
   push:
     branches-ignore:
@@ -7,4 +7,4 @@ on:
 
 jobs:
   qa:
-    uses: wkrzywiec/gh-workflows/.github/workflows/java-build-branch.yaml@main
+    uses: wkrzywiec/gh-workflows/.github/workflows/java-gradle-branch.yaml@main

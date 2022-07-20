@@ -1,2 +1,2 @@
 # Food Delivery Service
-[![Build & test food-delivery service](https://github.com/wkrzywiec/food-delivery-app/actions/workflows/gradle.yaml/badge.svg)](https://github.com/wkrzywiec/food-delivery-app/actions/workflows/gradle.yaml) ![GitHub issues](https://img.shields.io/github/issues/wkrzywiec/food-delivery-app)
+[![Build & test food-delivery service](https://github.com/wkrzywiec/food-delivery-app/actions/workflows/gradle.yaml/badge.svg)](https://github.com/wkrzywiec/food-delivery-app/actions/workflows/gradle.yaml) ![GitHub](https://img.shields.io/github/license/wkrzywiec/food-delivery-app) ![GitHub issues](https://img.shields.io/github/issues/wkrzywiec/food-delivery-app)

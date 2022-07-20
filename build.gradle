@@ -46,6 +46,16 @@ jacocoTestReport {
 	}
 }
 
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.5
+			}
+		}
+	}
+}
+
 sonarqube {
 	properties {
 		property 'sonar.projectName', 'Food delivery app'

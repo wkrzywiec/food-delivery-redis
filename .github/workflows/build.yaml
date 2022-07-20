@@ -1,0 +1,14 @@
+name: Build
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  qa:
+    uses: wkrzywiec/gh-workflows/.github/workflows/java-build.yaml@main
+    secrets:
+      sonarToken: ${{ secrets.SONAR_TOKEN }}
+      githubToken: ${{ secrets.GITHUB_TOKEN }}

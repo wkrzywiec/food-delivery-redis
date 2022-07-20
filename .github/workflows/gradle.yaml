@@ -6,3 +6,4 @@ jobs:
     uses: wkrzywiec/gh-workflows/.github/workflows/java-gradle.yaml@main
     secrets:
       sonarToken: ${{ secrets.SONAR_TOKEN }}
+      githubToken: ${{ secrets.GITHUB_TOKEN }}

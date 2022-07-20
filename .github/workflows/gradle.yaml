@@ -4,6 +4,5 @@ on: [ push, pull_request, workflow_dispatch ]
 jobs:
   qa:
     uses: wkrzywiec/gh-workflows/.github/workflows/java-gradle.yaml@main
-    with:
-      secrets:
-        sonarToken: ${{ secrets.SONAR_TOKEN }}
+    secrets:
+      sonarToken: ${{ secrets.SONAR_TOKEN }}

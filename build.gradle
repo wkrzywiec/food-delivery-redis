@@ -2,10 +2,14 @@ plugins {
 	id 'org.springframework.boot' version '2.7.1'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id 'groovy'
+	id 'jacoco'
+	id 'org.sonarqube' version '3.3'
 }
 
 group = 'io.wkrzywiec'
 version = '0.0.1-SNAPSHOT'
+description = 'food-delivery'
 sourceCompatibility = '17'
 
 configurations {
@@ -18,15 +22,34 @@ repositories {
 	mavenCentral()
 }
 
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+	runtimeOnly 'com.h2database:h2'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
+	testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+jacocoTestReport {
+	reports {
+		xml.required = true
+	}
+}
+
+sonarqube {
+	properties {
+		property 'sonar.projectName', 'Food delivery app'
+		property 'sonar.projectKey', 'wkrzywiec_food-delivery-app'
+		property 'sonar.organization', 'wkrzywiec'
+	}
 }

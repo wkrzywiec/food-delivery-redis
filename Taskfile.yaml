@@ -1,0 +1,42 @@
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+
+  check:
+    desc: Verify local tools
+    cmds:
+      - docker --info
+      - java --version
+      - gradlew --help
+
+  infra:
+    desc: Spin up dockerized infrastructure (postgres db)
+    cmds:
+      - docker compose up -d
+
+  local:
+    desc: Run app with infrastruture locally
+    cmds:
+      - task: infra
+      - echo "Starting food-delivery app..."
+      - gradlew :clean :bootRun --info
+
+  infra-down:
+    desc: Stop infrastructure
+    cmds:
+      - docker compose down
+      - echo "All infra apps stopped."
+
+  infra-clean:
+    desc: Stop and clean all persisted data
+    cmds:
+      - task: infra-down
+      - docker volume rm food-delivery-app_postgres-data
+      - echo "Docker volumes cleaned."

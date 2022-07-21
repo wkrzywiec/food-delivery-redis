@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=food_delivery
+      - POSTGRES_USER=food_delivery
+      - POSTGRES_PASSWORD=food_delivery
+
+volumes:
+  postgres-data:

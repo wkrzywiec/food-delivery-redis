@@ -8,10 +8,9 @@ spring:
   application:
     name: 'food-delivery-app'
   datasource:
-    url: jdbc:tc:postgresql:9.6.8:///food_delivery
     username: food_delivery
     password: food_delivery
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    driver-class-name: org.hibernate.dialect.PostgreSQL9Dialect
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQL9Dialect
     show-sql: true

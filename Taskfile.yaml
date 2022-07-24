@@ -22,7 +22,7 @@ tasks:
       - docker compose up -d
 
   local:
-    desc: Run app with infrastruture locally
+    desc: Run app with infrastructure locally
     cmds:
       - task: infra
       - echo "Starting food-delivery app..."

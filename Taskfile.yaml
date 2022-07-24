@@ -26,7 +26,8 @@ tasks:
     cmds:
       - task: infra
       - echo "Starting food-delivery app..."
-      - gradlew :clean :bootRun --info
+      - gradlew :clean :assemble --info
+      - gradlew :bootRun --info
 
   infra-down:
     desc: Stop infrastructure

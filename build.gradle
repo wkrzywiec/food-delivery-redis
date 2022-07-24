@@ -1,6 +1,8 @@
 plugins {
+	id 'idea'
 	id 'org.springframework.boot' version '2.7.1'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'org.liquibase.gradle' version '2.1.1'
 	id 'java'
 	id 'groovy'
 	id 'jacoco'
@@ -12,37 +14,79 @@ version = '0.0.1-SNAPSHOT'
 description = 'food-delivery'
 sourceCompatibility = '17'
 
+def activeDevProfiles = 'dev'
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+
+	integrationTestImplementation.extendsFrom testImplementation
+	integrationTestRuntime.extendsFrom testRuntime
 }
 
 repositories {
 	mavenCentral()
 }
 
-
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-	runtimeOnly 'com.h2database:h2'
+	implementation 'org.postgresql:postgresql'
+	implementation 'org.liquibase:liquibase-core:4.11.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
+	testImplementation 'org.spockframework:spock-spring:2.1-groovy-3.0'
 	testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
+	testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
+	integrationTestImplementation "org.testcontainers:spock:1.17.3"
+	integrationTestImplementation "org.testcontainers:postgresql:1.17.3"
 }
 
-tasks.named('test') {
+bootRun {
+	args = ["--spring.profiles.active=" + activeDevProfiles]
+}
+
+sourceSets {
+	integrationTest {
+		groovy.srcDir "$projectDir/src/integration-test/groovy"
+		resources.srcDir "$projectDir/src/integration-test/resources"
+		compileClasspath += main.output + test.output
+		runtimeClasspath += main.output + test.output
+	}
+}
+
+task integrationTest(type: Test) {
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+
 	useJUnitPlatform()
 }
+
+check.dependsOn integrationTest
 
 jacocoTestReport {
 	reports {
 		xml.required = true
+	}
+	dependsOn = [
+	        'test',
+			'integrationTest'
+	]
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.5
+			}
+		}
 	}
 }
 

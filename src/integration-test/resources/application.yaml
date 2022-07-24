@@ -8,8 +8,8 @@ spring:
   application:
     name: 'food-delivery-app'
   datasource:
-    username: food_delivery
-    password: food_delivery
+#    username: food_delivery
+#    password: food_delivery
     driver-class-name: org.hibernate.dialect.PostgreSQL9Dialect
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQL9Dialect

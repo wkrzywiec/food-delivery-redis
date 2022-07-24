@@ -14,6 +14,8 @@ version = '0.0.1-SNAPSHOT'
 description = 'food-delivery'
 sourceCompatibility = '17'
 
+def activeDevProfiles = 'dev'
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -26,7 +28,6 @@ configurations {
 repositories {
 	mavenCentral()
 }
-
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -45,6 +46,10 @@ dependencies {
 	testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
 	integrationTestImplementation "org.testcontainers:spock:1.17.3"
 	integrationTestImplementation "org.testcontainers:postgresql:1.17.3"
+}
+
+bootRun {
+	args = ["--spring.profiles.active=" + activeDevProfiles]
 }
 
 sourceSets {

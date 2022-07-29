@@ -11,9 +11,14 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
+import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.CANCELLED;
 import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.CREATED;
+import static java.lang.String.format;
 
 @Entity
 @Getter
@@ -34,10 +39,16 @@ class Order {
     private BigDecimal deliveryCharge = new BigDecimal(0);
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
+    private Map<String, String> metadata = new HashMap<>();
 
     private Order() {}
 
-    private Order(String customerId, String restaurantId, List<Item> items, String address, BigDecimal deliveryCharge) {
+    private Order(String id, String customerId, String restaurantId, List<Item> items, String address, BigDecimal deliveryCharge) {
+        if (id == null) {
+            this.id = UUID.randomUUID().toString();
+        } else {
+            this.id = id;
+        }
         this.customerId = customerId;
         this.restaurantId = restaurantId;
         this.items = items;
@@ -45,15 +56,9 @@ class Order {
         this.deliveryCharge = deliveryCharge;
     }
 
-    void calculateTotal() {
-        this.total = items.stream()
-                .map(item -> item.getPricePerItem().multiply(BigDecimal.valueOf(item.getAmount())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .add(deliveryCharge);
-    }
-
     public static Order from(CreateOrder createOrder) {
         var order = new Order(
+                createOrder.id(),
                 createOrder.customerId(),
                 createOrder.restaurantId(),
                 createOrder.items().stream().map(dto -> Item.builder()
@@ -67,7 +72,21 @@ class Order {
         return order;
     }
 
-    public List<Message> events() {
-        return List.of();
+    void calculateTotal() {
+        this.total = items.stream()
+                .map(item -> item.getPricePerItem().multiply(BigDecimal.valueOf(item.getAmount())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(deliveryCharge);
+    }
+
+    void cancelOrder(String reason) {
+        if (status != OrderStatus.CREATED) {
+            throw new OrderingException(format("Failed to cancel an %s order. It's not possible to cancel an order with '%s' status", id, status));
+        }
+        this.status = CANCELLED;
+
+        if (reason != null) {
+            metadata.put("cancellationReason", reason);
+        }
     }
 }

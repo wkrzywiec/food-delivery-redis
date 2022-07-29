@@ -3,10 +3,12 @@ package io.wkrzywiec.fooddelivery.domain.ordering;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
 
 class InMemoryOrderingRepository implements OrderingRepository {
 
@@ -26,5 +28,10 @@ class InMemoryOrderingRepository implements OrderingRepository {
         }
         database.put(id, newOrder);
         return newOrder;
+    }
+
+    @Override
+    public Optional<Order> findById(String id) {
+        return ofNullable(database.get(id));
     }
 }

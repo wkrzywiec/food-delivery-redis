@@ -2,14 +2,16 @@ package io.wkrzywiec.fooddelivery.domain.ordering;
 
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CreateOrder;
 import lombok.Getter;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+import static io.wkrzywiec.fooddelivery.domain.ordering.ItemTestData.anItem;
 import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.CREATED;
+import static java.lang.String.format;
 
 @Getter
 public class OrderTestData {
@@ -20,9 +22,10 @@ public class OrderTestData {
     private String deliveryManId = null;
     private OrderStatus status = CREATED;
     private String address = "Pizza street, Naples, Italy";
-    private List<ItemTestData> items = new ArrayList<>();
+    private List<ItemTestData> items = List.of(anItem());
     private BigDecimal deliveryCharge = new BigDecimal(5);
     private BigDecimal tip = new BigDecimal(0);
+    private Map<String, String> metadata = new HashMap<>();
 
     private OrderTestData() {};
 
@@ -31,11 +34,24 @@ public class OrderTestData {
     }
 
     public Order entity() {
-        return Order.from(createOrder());
+        Order order = createAnEmptyOrder();
+        setValue(order, "id", id);
+        setValue(order, "customerId", customerId);
+        setValue(order, "restaurantId", restaurantId);
+        setValue(order, "deliveryManId", deliveryManId);
+        setValue(order, "status", status);
+        setValue(order, "address", address);
+        setValue(order, "items", items.stream().map(ItemTestData::entity).toList());
+        setValue(order, "deliveryCharge", deliveryCharge);
+        setValue(order, "tip", tip);
+        setValue(order, "metadata", metadata);
+
+        order.calculateTotal();
+        return order;
     }
 
     public CreateOrder createOrder() {
-        return new CreateOrder(customerId, restaurantId, items.stream().map(ItemTestData::dto).toList(), address, deliveryCharge);
+        return new CreateOrder(id, customerId, restaurantId, items.stream().map(ItemTestData::dto).toList(), address, deliveryCharge);
     }
 
     public OrderTestData withId(String id) {
@@ -81,5 +97,29 @@ public class OrderTestData {
     public OrderTestData withTip(BigDecimal tip) {
         this.tip = tip;
         return this;
+    }
+
+    public OrderTestData withMetadata(Map<String, String> metadata) {
+        this.metadata = metadata;
+        return this;
+    }
+
+    private Order createAnEmptyOrder() {
+        try {
+            var constructor = Order.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to construct Order entity class for tests", e);
+        }
+    }
+
+    private void setValue(Order order, String fieldName, Object value) {
+        try {
+            FieldUtils.writeField(order, fieldName, value, true);
+
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(format("Failed to set a %s field in Order entity class for tests", fieldName), e);
+        }
     }
 }

@@ -1,12 +1,16 @@
 package io.wkrzywiec.fooddelivery.domain.ordering
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderProcessingError
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
 import spock.lang.Specification
 import spock.lang.Subject
 
 import java.time.Clock
+import java.time.Instant
 
 import static io.wkrzywiec.fooddelivery.domain.ordering.ItemTestData.anItem
 import static io.wkrzywiec.fooddelivery.domain.ordering.OrderTestData.anOrder
@@ -18,10 +22,13 @@ class OrderingFacadeSpec extends Specification {
     InMemoryOrderingRepository repository
     FakeMessagePublisher publisher
 
+    var testTime = Instant.parse("2022-08-08T05:30:24.00Z")
+    Clock testClock = Clock.fixed(testTime)
+
     def setup() {
         repository = new InMemoryOrderingRepository()
         publisher = new FakeMessagePublisher()
-        facade = new OrderingFacade(repository, publisher, Clock.systemUTC())
+        facade = new OrderingFacade(repository, publisher, testClock)
     }
 
     def "Create an order"() {
@@ -60,9 +67,9 @@ class OrderingFacadeSpec extends Specification {
             header.messageId() != null
             header.channel() == "ordering"
             header.itemId() == orderId
-            header.createdAt() != null
+            header.createdAt() == testClock.instant()
 
-            def body = deserializeMessage(event.body(), OrderCreated) as OrderCreated
+            def body = deserializeJson(event.body(), OrderCreated)
             body.id() == orderId
             body.customerId() == order.getCustomerId()
             body.restaurantId() == order.getRestaurantId()
@@ -71,10 +78,81 @@ class OrderingFacadeSpec extends Specification {
             body.deliveryCharge() == order.getDeliveryCharge()
             body.total() == 5.5 + order.getDeliveryCharge()
         }
-
     }
 
-     private Object deserializeMessage(String json, Class objectType) {
+    def "Cancel an order"() {
+        given:
+        var order = anOrder()
+        repository.save(order.entity())
+
+        and:
+        var cancellationReason = "Not hungry anymore"
+        var cancelOrder = new CancelOrder(order.id, cancellationReason)
+
+        when:
+        facade.handle(cancelOrder)
+
+        then: "Order is canceled"
+        with(repository.findById(order.id).get()) { cancelledOrder ->
+            cancelledOrder.status == OrderStatus.CANCELLED
+            cancelledOrder.metadata.get("cancellationReason") == cancellationReason
+        }
+
+        and: "OrderCancelled event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering")) {events ->
+            events.size() == 1
+            def event = events.get(0)
+
+            def header = event.header()
+            header.messageId() != null
+            header.channel() == "ordering"
+            header.itemId() == order.id
+            header.createdAt() == testClock.instant()
+
+            def body = deserializeJson(event.body(), OrderCanceled)
+            body.id() == order.id
+            body.reason() == cancellationReason
+        }
+    }
+
+    def "Fail to cancel a #status order"() {
+        given:
+        var order = anOrder().withStatus(status)
+        repository.save(order.entity())
+
+        and:
+        var cancelOrder = new CancelOrder(order.id, "Not hungry anymore")
+
+        when:
+        facade.handle(cancelOrder)
+
+        then: "Order is not canceled"
+        with(repository.findById(order.id).get()) { cancelledOrder ->
+            cancelledOrder.status == order.getStatus()
+        }
+
+        and: "OrderProcessingError event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering")) {events ->
+            events.size() == 1
+            def event = events.get(0)
+
+            def header = event.header()
+            header.messageId() != null
+            header.channel() == "ordering"
+            header.type() == "OrderProcessingError"
+            header.itemId() == order.id
+            header.createdAt() == testClock.instant()
+
+            def body = deserializeJson(event.body(), OrderProcessingError)
+            body.id() == order.id
+            body.details() == "Failed to cancel an $order.id order. It's not possible to cancel an order with '$status' status"
+        }
+
+        where:
+        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+    }
+
+     private <T> T deserializeJson(String json, Class<T> objectType) {
         ObjectMapper objectMapper = new ObjectMapper()
         return objectMapper.readValue(json, objectType)
     }

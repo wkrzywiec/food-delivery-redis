@@ -13,13 +13,13 @@ public class FakeMessagePublisher implements MessagePublisher {
 
     @Override
     public void send(Message message) {
-      log.info("Publishing message on channel: '{}', body: '{}'", message.header().channel(), message.body());
+      log.info("Publishing '{}' message on channel: '{}', body: '{}'", message.header().type(), message.header().channel(), message.body());
       var channel = message.header().channel();
 
       var messagesInChannel = messages.getOrDefault(channel, new ArrayList<>());
       messagesInChannel.add(message);
       messages.put(message.header().channel(), messagesInChannel);
 
-      log.info("Message was published on channel: '{}', body: '{}'", message.header().channel(), message.body());
+      log.info("'{}' message was published on channel: '{}', body: '{}'", message.header().type(), message.header().channel(), message.body());
     }
 }

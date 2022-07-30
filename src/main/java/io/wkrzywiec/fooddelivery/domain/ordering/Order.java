@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.CANCELLED;
-import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.CREATED;
+import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.*;
 import static java.lang.String.format;
 
 @Entity
@@ -56,7 +55,7 @@ class Order {
         this.deliveryCharge = deliveryCharge;
     }
 
-    public static Order from(CreateOrder createOrder) {
+    static Order from(CreateOrder createOrder) {
         var order = new Order(
                 createOrder.id(),
                 createOrder.customerId(),
@@ -88,5 +87,13 @@ class Order {
         if (reason != null) {
             metadata.put("cancellationReason", reason);
         }
+    }
+
+    void setInProgress() {
+        if (status == CREATED) {
+            this.status = IN_PROGRESS;
+            return;
+        }
+        throw new OrderingException(format("Failed to set an '%s' order to IN_PROGRESS. It's not allowed to do it for an order with '%s' status", id, status));
     }
 }

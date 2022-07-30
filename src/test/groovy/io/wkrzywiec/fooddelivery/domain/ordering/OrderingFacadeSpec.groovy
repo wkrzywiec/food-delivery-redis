@@ -1,13 +1,17 @@
 package io.wkrzywiec.fooddelivery.domain.ordering
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderInProgress
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderProcessingError
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
+import io.wkrzywiec.fooddelivery.infra.messaging.Message
 import spock.lang.Specification
 import spock.lang.Subject
+import spock.lang.Title
 
 import java.time.Clock
 import java.time.Instant
@@ -16,6 +20,7 @@ import static io.wkrzywiec.fooddelivery.domain.ordering.ItemTestData.anItem
 import static io.wkrzywiec.fooddelivery.domain.ordering.OrderTestData.anOrder
 
 @Subject(OrderingFacade)
+@Title("Specification for ordering process")
 class OrderingFacadeSpec extends Specification {
 
     OrderingFacade facade
@@ -59,15 +64,9 @@ class OrderingFacadeSpec extends Specification {
 
         and: "OrderCreated event is published on 'ordering' channel"
         String orderId = repository.database.values().find().id
-        with(publisher.messages.get("ordering")) {events ->
-            events.size() == 1
-            def event = events.get(0)
+        with(publisher.messages.get("ordering").get(0)) {event ->
 
-            def header = event.header()
-            header.messageId() != null
-            header.channel() == "ordering"
-            header.itemId() == orderId
-            header.createdAt() == testClock.instant()
+            verifyEventHeader(event, order.id, "OrderCreated")
 
             def body = deserializeJson(event.body(), OrderCreated)
             body.id() == orderId
@@ -99,15 +98,9 @@ class OrderingFacadeSpec extends Specification {
         }
 
         and: "OrderCancelled event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering")) {events ->
-            events.size() == 1
-            def event = events.get(0)
+        with(publisher.messages.get("ordering").get(0)) {event ->
 
-            def header = event.header()
-            header.messageId() != null
-            header.channel() == "ordering"
-            header.itemId() == order.id
-            header.createdAt() == testClock.instant()
+            verifyEventHeader(event, order.id, "OrderCancelled")
 
             def body = deserializeJson(event.body(), OrderCanceled)
             body.id() == order.id
@@ -132,16 +125,9 @@ class OrderingFacadeSpec extends Specification {
         }
 
         and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering")) {events ->
-            events.size() == 1
-            def event = events.get(0)
+        with(publisher.messages.get("ordering").get(0)) {event ->
 
-            def header = event.header()
-            header.messageId() != null
-            header.channel() == "ordering"
-            header.type() == "OrderProcessingError"
-            header.itemId() == order.id
-            header.createdAt() == testClock.instant()
+            verifyEventHeader(event, order.id, "OrderProcessingError")
 
             def body = deserializeJson(event.body(), OrderProcessingError)
             body.id() == order.id
@@ -152,7 +138,72 @@ class OrderingFacadeSpec extends Specification {
         status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
     }
 
-     private <T> T deserializeJson(String json, Class<T> objectType) {
+    def "Set order to IN_PROGRESS"() {
+        given:
+        var order = anOrder()
+        repository.save(order.entity())
+
+        and:
+        var foodInPreparation = new FoodInPreparation(order.id)
+
+        when:
+        facade.handle(foodInPreparation)
+
+        then: "Order is IN_PROGRESS"
+        with(repository.findById(order.id).get()) { cancelledOrder ->
+            cancelledOrder.status == OrderStatus.IN_PROGRESS
+        }
+
+        and: "OrderInProgress event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering").get(0)) {event ->
+
+            verifyEventHeader(event, order.id, "OrderInProgress")
+
+            def body = deserializeJson(event.body(), OrderInProgress)
+            body.id() == order.id
+        }
+    }
+
+    def "Fail to set IN_PROGRESS a #status order"() {
+        given:
+        var order = anOrder().withStatus(status)
+        repository.save(order.entity())
+
+        and:
+        var foodInPreparation = new FoodInPreparation(order.id)
+
+        when:
+        facade.handle(foodInPreparation)
+
+        then: "Order has not changed a status"
+        with(repository.findById(order.id).get()) { cancelledOrder ->
+            cancelledOrder.status == order.getStatus()
+        }
+
+        and: "OrderProcessingError event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering").get(0)) {event ->
+
+            verifyEventHeader(event, order.id, "OrderProcessingError")
+
+            def body = deserializeJson(event.body(), OrderProcessingError)
+            body.id() == order.id
+            body.details() == "Failed to set an '$order.id' order to IN_PROGRESS. It's not allowed to do it for an order with '$status' status"
+        }
+
+        where:
+        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+    }
+
+    private void verifyEventHeader(Message event, String orderId, String eventType) {
+        def header = event.header()
+        header.messageId() != null
+        header.channel() == "ordering"
+        header.type() == eventType
+        header.itemId() == orderId
+        header.createdAt() == testClock.instant()
+    }
+
+    private <T> T deserializeJson(String json, Class<T> objectType) {
         ObjectMapper objectMapper = new ObjectMapper()
         return objectMapper.readValue(json, objectType)
     }

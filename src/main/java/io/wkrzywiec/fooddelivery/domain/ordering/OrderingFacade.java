@@ -9,6 +9,7 @@ import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder;
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CreateOrder;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderInProgress;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderProcessingError;
 import io.wkrzywiec.fooddelivery.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.infra.messaging.Message;
@@ -60,14 +61,20 @@ public class OrderingFacade {
 
         Try.run(() -> order.cancelOrder(cancelOrder.reason()))
                 .onSuccess(v -> publishSuccessEvent(order.getId(), new OrderCanceled(cancelOrder.id(), cancelOrder.reason())))
-                .onFailure(ex -> publishingFailureEvent(order.getId(), "Failed to cancel an order.", ex));
-
-
-        log.info("Cancellation of an order '{}' has been finished", order.getId());
+                .onFailure(ex -> publishingFailureEvent(order.getId(), "Failed to cancel an order.", ex))
+                .andFinally(() -> log.info("Cancellation of an order '{}' has been completed", order.getId()));
     }
 
     public void handle(FoodInPreparation foodInPreparation) {
+        log.info("Setting '{}' order in IN_PROGRESS state", foodInPreparation.orderId());
 
+        var order = repository.findById(foodInPreparation.orderId())
+                .orElseThrow(() -> new OrderingException(format("Failed to set an '%s' order in IN_PROGRESS state. There is no such order with provided id.", foodInPreparation.orderId())));
+
+        Try.run(order::setInProgress)
+                .onSuccess(v -> publishSuccessEvent(order.getId(), new OrderInProgress(foodInPreparation.orderId())))
+                .onFailure(ex -> publishingFailureEvent(order.getId(), "Failed to set an order to IN_PROGRESS state.", ex))
+                .andFinally(() -> log.info("Setting an '{}' order to IN_PROGRESS state has been completed", foodInPreparation.orderId()));
     }
 
     public void handle(AddTip addTip) {

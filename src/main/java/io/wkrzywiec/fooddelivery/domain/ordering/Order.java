@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -34,10 +35,12 @@ class Order {
     private String deliveryManId;
     private OrderStatus status = CREATED;
     private String address;
+    @Type(type = "io.wkrzywiec.fooddelivery.domain.ordering.ItemType")
     private List<Item> items;
     private BigDecimal deliveryCharge = new BigDecimal(0);
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
+    @Type(type = "io.wkrzywiec.fooddelivery.infra.repository.MapJsonbType")
     private Map<String, String> metadata = new HashMap<>();
 
     private Order() {}

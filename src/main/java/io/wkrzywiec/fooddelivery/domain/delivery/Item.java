@@ -7,12 +7,10 @@ import lombok.ToString;
 import javax.persistence.Entity;
 import java.math.BigDecimal;
 
-@Entity
 @Getter
 @EqualsAndHashCode
 @ToString
 class Item {
-
     private String name;
     private int amount;
     private BigDecimal pricePerItem;

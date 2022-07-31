@@ -3,7 +3,6 @@ package io.wkrzywiec.fooddelivery.domain.delivery;
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderUpdated;
 
 public class DeliveryFacade {
 
@@ -35,10 +34,6 @@ public class DeliveryFacade {
     }
 
     public void handle(DeliverFood deliverFood) {
-
-    }
-
-    public void handle(OrderUpdated orderUpdated) {
 
     }
 }

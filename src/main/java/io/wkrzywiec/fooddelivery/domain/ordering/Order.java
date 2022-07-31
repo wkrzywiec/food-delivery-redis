@@ -102,4 +102,12 @@ class Order {
         this.tip = tip;
         this.calculateTotal();
     }
+
+    public void complete() {
+        if (status == IN_PROGRESS) {
+            this.status = COMPLETED;
+            return;
+        }
+        throw new OrderingException(format("Failed to set an '%s' order to COMPLETED. It's not allowed to do it for an order with '%s' status", id, status));
+    }
 }

@@ -63,10 +63,10 @@ public class OrderingFacade {
     }
 
     public void handle(FoodInPreparation foodInPreparation) {
-        log.info("Setting '{}' order in IN_PROGRESS state", foodInPreparation.orderId());
+        log.info("Setting '{}' order to IN_PROGRESS state", foodInPreparation.orderId());
 
         var order = repository.findById(foodInPreparation.orderId())
-                .orElseThrow(() -> new OrderingException(format("Failed to set an '%s' order in IN_PROGRESS state. There is no such order with provided id.", foodInPreparation.orderId())));
+                .orElseThrow(() -> new OrderingException(format("Failed to set an '%s' order to IN_PROGRESS state. There is no such order with provided id.", foodInPreparation.orderId())));
 
         Try.run(order::setInProgress)
                 .onSuccess(v -> publishSuccessEvent(order.getId(), new OrderInProgress(foodInPreparation.orderId())))
@@ -87,7 +87,15 @@ public class OrderingFacade {
     }
 
     public void handle(FoodDelivered foodDelivered) {
+        log.info("Setting '{}' order to COMPLETED state", foodDelivered.orderId());
 
+        var order = repository.findById(foodDelivered.orderId())
+                .orElseThrow(() -> new OrderingException(format("Failed to complete an '%s' order. There is no such order with provided id.", foodDelivered.orderId())));
+
+        Try.run(order::complete)
+                .onSuccess(v -> publishSuccessEvent(order.getId(), new OrderCompleted(foodDelivered.orderId())))
+                .onFailure(ex -> publishingFailureEvent(order.getId(), "Failed to complete an order.", ex))
+                .andFinally(() -> log.info("Setting an '{}' order to COMPLETED state has been completed", foodDelivered.orderId()));
     }
 
     private void publishSuccessEvent(String orderId, Object eventObject) {

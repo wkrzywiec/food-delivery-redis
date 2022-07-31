@@ -1,10 +1,12 @@
 package io.wkrzywiec.fooddelivery.domain.ordering
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodDelivered
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.AddTip
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCompleted
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderInProgress
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderProcessingError
@@ -230,6 +232,62 @@ class OrderingFacadeSpec extends Specification {
             body.tip().doubleValue() == tip
             body.total().doubleValue() == total
         }
+    }
+
+    def "Complete an order"() {
+        given:
+        var order = anOrder().withStatus(OrderStatus.IN_PROGRESS)
+        repository.save(order.entity())
+
+        and:
+        var foodDelivered = new FoodDelivered(order.id)
+
+        when:
+        facade.handle(foodDelivered)
+
+        then: "Order is completed"
+        with(repository.findById(order.id).get()) { cancelledOrder ->
+            cancelledOrder.status == OrderStatus.COMPLETED
+        }
+
+        and: "OrderCompleted event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering").get(0)) {event ->
+
+            verifyEventHeader(event, order.id, "OrderCompleted")
+
+            def body = deserializeJson(event.body(), OrderCompleted)
+            body.orderId() == order.id
+        }
+    }
+
+    def "Fail to complete a #status order"() {
+        given:
+        var order = anOrder().withStatus(status)
+        repository.save(order.entity())
+
+        and:
+        var foodDelivered = new FoodDelivered(order.id)
+
+        when:
+        facade.handle(foodDelivered)
+
+        then: "Order has not changed a status"
+        with(repository.findById(order.id).get()) { cancelledOrder ->
+            cancelledOrder.status == order.getStatus()
+        }
+
+        and: "OrderProcessingError event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering").get(0)) {event ->
+
+            verifyEventHeader(event, order.id, "OrderProcessingError")
+
+            def body = deserializeJson(event.body(), OrderProcessingError)
+            body.id() == order.id
+            body.details() == "Failed to set an '$order.id' order to COMPLETED. It's not allowed to do it for an order with '$status' status"
+        }
+
+        where:
+        status << [OrderStatus.CREATED, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
     }
 
     private void verifyEventHeader(Message event, String orderId, String eventType) {

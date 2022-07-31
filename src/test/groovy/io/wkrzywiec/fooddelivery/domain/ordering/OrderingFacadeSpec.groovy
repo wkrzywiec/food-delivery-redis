@@ -2,11 +2,13 @@ package io.wkrzywiec.fooddelivery.domain.ordering
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
+import io.wkrzywiec.fooddelivery.domain.ordering.incoming.AddTip
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderInProgress
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderProcessingError
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.TipAddedToOrder
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
 import io.wkrzywiec.fooddelivery.infra.messaging.Message
 import spock.lang.Specification
@@ -192,6 +194,42 @@ class OrderingFacadeSpec extends Specification {
 
         where:
         status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+    }
+
+    def "Add tip to an order"() {
+        given:
+        double itemCost = 10
+        double deliveryCharge = 5
+
+        var order = anOrder()
+                .withItems(anItem().withPricePerItem(itemCost))
+                .withDeliveryCharge(deliveryCharge)
+        repository.save(order.entity())
+
+        and:
+        double tip = 20
+        var addTip = new AddTip(order.id, new BigDecimal(tip))
+
+        when:
+        facade.handle(addTip)
+
+        then: "Tip was added"
+        double total = itemCost + deliveryCharge + tip
+        with(repository.findById(order.id).get()) { orderEntity ->
+            orderEntity.tip.doubleValue() == tip
+            orderEntity.total.doubleValue() == total
+        }
+
+        and: "TipAddedToOrder event is published on 'ordering' channel"
+        with(publisher.messages.get("ordering").get(0)) {event ->
+
+            verifyEventHeader(event, order.id, "TipAddedToOrder")
+
+            def body = deserializeJson(event.body(), TipAddedToOrder)
+            body.orderId() == order.id
+            body.tip().doubleValue() == tip
+            body.total().doubleValue() == total
+        }
     }
 
     private void verifyEventHeader(Message event, String orderId, String eventType) {

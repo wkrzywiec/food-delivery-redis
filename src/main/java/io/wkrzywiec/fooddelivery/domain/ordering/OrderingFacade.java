@@ -7,10 +7,7 @@ import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation;
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.AddTip;
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder;
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CreateOrder;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderInProgress;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderProcessingError;
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.*;
 import io.wkrzywiec.fooddelivery.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.infra.messaging.MessagePublisher;
@@ -78,7 +75,15 @@ public class OrderingFacade {
     }
 
     public void handle(AddTip addTip) {
+        log.info("Adding {} tip to '{}' order.", addTip.tip(), addTip.orderId());
 
+        var order = repository.findById(addTip.orderId())
+                .orElseThrow(() -> new OrderingException(format("Failed add tip an '%s' order. There is no such order with provided id.", addTip.orderId())));
+
+        Try.run(() -> order.addTip(addTip.tip()))
+                .onSuccess(v -> publishSuccessEvent(order.getId(), new TipAddedToOrder(order.getId(), order.getTip(), order.getTotal())))
+                .onFailure(ex -> publishingFailureEvent(order.getId(), "Failed to add tip to an order.", ex))
+                .andFinally(() -> log.info("Adding a tip to '{}' order has been completed", addTip.orderId()));
     }
 
     public void handle(FoodDelivered foodDelivered) {

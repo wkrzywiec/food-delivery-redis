@@ -75,7 +75,8 @@ class Order {
         this.total = items.stream()
                 .map(item -> item.getPricePerItem().multiply(BigDecimal.valueOf(item.getAmount())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .add(deliveryCharge);
+                .add(deliveryCharge)
+                .add(tip);
     }
 
     void cancelOrder(String reason) {
@@ -95,5 +96,10 @@ class Order {
             return;
         }
         throw new OrderingException(format("Failed to set an '%s' order to IN_PROGRESS. It's not allowed to do it for an order with '%s' status", id, status));
+    }
+
+    public void addTip(BigDecimal tip) {
+        this.tip = tip;
+        this.calculateTotal();
     }
 }

@@ -89,8 +89,8 @@ public class OrderTestData {
         return this;
     }
 
-    public OrderTestData withDeliveryCharge(BigDecimal deliveryCharge) {
-        this.deliveryCharge = deliveryCharge;
+    public OrderTestData withDeliveryCharge(double deliveryCharge) {
+        this.deliveryCharge = new BigDecimal(deliveryCharge);
         return this;
     }
 

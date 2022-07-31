@@ -10,7 +10,7 @@ jobs:
   qa:
     uses: wkrzywiec/gh-workflows/.github/workflows/java-gradle.yaml@main
     with:
-      appName: food-delivery
+      app-name: food-delivery
     secrets:
       sonarToken: ${{ secrets.SONAR_TOKEN }}
       githubToken: ${{ secrets.GITHUB_TOKEN }}

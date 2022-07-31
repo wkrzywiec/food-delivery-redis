@@ -9,4 +9,4 @@ jobs:
   qa:
     uses: wkrzywiec/gh-workflows/.github/workflows/java-gradle-branch.yaml@main
     with:
-      appName: food-delivery
+      app-name: food-delivery

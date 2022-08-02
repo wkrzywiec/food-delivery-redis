@@ -56,7 +56,6 @@ class OrderingFacadeSpec extends Specification {
             savedOrder.id != null
             savedOrder.customerId == order.getCustomerId()
             savedOrder.restaurantId == order.getRestaurantId()
-            savedOrder.deliveryManId == null
             savedOrder.address == order.getAddress()
             savedOrder.items == order.getItems().stream().map(ItemTestData::entity).toList()
             savedOrder.status == OrderStatus.CREATED

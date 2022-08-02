@@ -25,7 +25,6 @@ class Order {
     private String id;
     private String customerId;
     private String restaurantId;
-    private String deliveryManId;
     private OrderStatus status = CREATED;
     private String address;
     @Type(type = "io.wkrzywiec.fooddelivery.domain.ordering.ItemType")

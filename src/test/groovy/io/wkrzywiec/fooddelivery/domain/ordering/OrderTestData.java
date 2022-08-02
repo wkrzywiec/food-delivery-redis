@@ -17,7 +17,6 @@ import static java.lang.String.format;
     private String id = UUID.randomUUID().toString();
     private String customerId = "default-customer-id";
     private String restaurantId = "default-restaurant-id";
-    private String deliveryManId = null;
     private OrderStatus status = CREATED;
     private String address = "Pizza street, Naples, Italy";
     private List<ItemTestData> items = List.of(anItem());
@@ -36,7 +35,6 @@ import static java.lang.String.format;
         setValue(order, "id", id);
         setValue(order, "customerId", customerId);
         setValue(order, "restaurantId", restaurantId);
-        setValue(order, "deliveryManId", deliveryManId);
         setValue(order, "status", status);
         setValue(order, "address", address);
         setValue(order, "items", items.stream().map(ItemTestData::entity).toList());
@@ -64,11 +62,6 @@ import static java.lang.String.format;
 
      OrderTestData withRestaurantId(String restaurantId) {
         this.restaurantId = restaurantId;
-        return this;
-    }
-
-     OrderTestData withDeliveryManId(String deliveryManId) {
-        this.deliveryManId = deliveryManId;
         return this;
     }
 

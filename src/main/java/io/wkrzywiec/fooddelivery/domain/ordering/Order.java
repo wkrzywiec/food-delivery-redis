@@ -7,6 +7,7 @@ import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ import static java.lang.String.format;
 @ToString
 class Order {
 
+    @Id
     private String id;
     private String customerId;
     private String restaurantId;

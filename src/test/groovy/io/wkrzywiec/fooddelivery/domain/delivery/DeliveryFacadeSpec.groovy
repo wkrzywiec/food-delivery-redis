@@ -1,7 +1,10 @@
 package io.wkrzywiec.fooddelivery.domain.delivery
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
+import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
 import io.wkrzywiec.fooddelivery.infra.messaging.Message
@@ -81,6 +84,66 @@ class DeliveryFacadeSpec extends Specification {
             body.deliveryCharge() == delivery.getDeliveryCharge()
             body.total() == delivery.getTotal()
         }
+    }
+
+    def "Cancel a delivery"() {
+        given:
+        var delivery = aDelivery()
+        repository.save(delivery.entity())
+
+        and:
+        var cancellationReason = "Not hungry anymore"
+        var orderCanceled = new OrderCanceled(delivery.orderId, cancellationReason)
+
+        when:
+        facade.handle(orderCanceled)
+
+        then: "Delivery is canceled"
+        with(repository.database.values()[0]) { cancelledDelivery ->
+            cancelledDelivery.status == DeliveryStatus.CANCELED
+            cancelledDelivery.metadata.get("cancellationReason") == cancellationReason
+        }
+
+        and: "DeliveryCancelled event is published on 'ordering' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryCanceled")
+
+            def body = deserializeJson(event.body(), DeliveryCanceled)
+            body.deliveryId() == delivery.id
+            body.orderId() == delivery.orderId
+            body.reason() == cancellationReason
+        }
+    }
+
+    def "Fail to cancel a #status order"() {
+        given:
+        var delivery = aDelivery().withStatus(status)
+        repository.save(delivery.entity())
+
+        and:
+        var cancelOrder = new OrderCanceled(delivery.orderId, "Not hungry anymore")
+
+        when:
+        facade.handle(cancelOrder)
+
+        then: "Delivery is canceled"
+        with(repository.findById(delivery.id).get()) { cancelledOrder ->
+            cancelledOrder.status == delivery.getStatus()
+        }
+
+        and: "DeliveryProcessingError event is published on 'ordering' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to cancel a $delivery.id delivery. It's not possible to cancel a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
     }
 
     private void verifyEventHeader(Message event, String deliveryId, String eventType) {

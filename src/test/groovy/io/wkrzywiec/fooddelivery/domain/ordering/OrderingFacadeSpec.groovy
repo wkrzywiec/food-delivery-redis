@@ -96,7 +96,7 @@ class OrderingFacadeSpec extends Specification {
 
         then: "Order is canceled"
         with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == OrderStatus.CANCELLED
+            cancelledOrder.status == OrderStatus.CANCELED
             cancelledOrder.metadata.get("cancellationReason") == cancellationReason
         }
 
@@ -138,7 +138,7 @@ class OrderingFacadeSpec extends Specification {
         }
 
         where:
-        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     def "Set order to IN_PROGRESS"() {
@@ -194,7 +194,7 @@ class OrderingFacadeSpec extends Specification {
         }
 
         where:
-        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     def "Add tip to an order"() {
@@ -286,7 +286,7 @@ class OrderingFacadeSpec extends Specification {
         }
 
         where:
-        status << [OrderStatus.CREATED, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+        status << [OrderStatus.CREATED, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     private void verifyEventHeader(Message event, String orderId, String eventType) {

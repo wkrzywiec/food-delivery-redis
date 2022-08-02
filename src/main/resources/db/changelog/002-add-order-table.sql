@@ -7,7 +7,6 @@ CREATE TABLE public.order
     id                  VARCHAR(255)    NOT NULL,
     customer_id         VARCHAR(255)    NOT NULL,
     restaurant_id       VARCHAR(255)    NOT NULL,
-    delivery_man_id     VARCHAR(255),
     status              VARCHAR(255)    NOT NULL,
     address             VARCHAR         NOT NULL,
     items               JSONB           NOT NULL,

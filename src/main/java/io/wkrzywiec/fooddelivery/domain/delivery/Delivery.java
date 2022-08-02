@@ -4,9 +4,17 @@ import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.hibernate.annotations.Type;
+
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
+import static io.wkrzywiec.fooddelivery.domain.delivery.DeliveryStatus.CREATED;
+import static io.wkrzywiec.fooddelivery.domain.delivery.DeliveryStatus.CANCELED;
+import static java.lang.String.format;
 
 @Getter
 @EqualsAndHashCode
@@ -24,6 +32,8 @@ class Delivery {
     private BigDecimal deliveryCharge = new BigDecimal(0);
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
+    @Type(type = "io.wkrzywiec.fooddelivery.infra.repository.MapJsonbType")
+    private Map<String, String> metadata = new HashMap<>();
 
     private Delivery() {};
 
@@ -36,7 +46,7 @@ class Delivery {
         this.items = items;
         this.deliveryCharge = deliveryCharge;
         this.total = total;
-        this.status = DeliveryStatus.CREATED;
+        this.status = CREATED;
     }
 
     public static Delivery from(OrderCreated orderCreated) {
@@ -49,5 +59,16 @@ class Delivery {
                 orderCreated.deliveryCharge(),
                 orderCreated.total()
         );
+    }
+
+    public void cancel(String reason) {
+        if (status != CREATED) {
+            throw new DeliveryException(format("Failed to cancel a %s delivery. It's not possible to cancel a delivery with '%s' status", id, status));
+        }
+        this.status = CANCELED;
+
+        if (reason != null) {
+            metadata.put("cancellationReason", reason);
+        }
     }
 }

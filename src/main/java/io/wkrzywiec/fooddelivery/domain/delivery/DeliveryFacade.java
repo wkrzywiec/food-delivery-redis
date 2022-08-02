@@ -1,8 +1,11 @@
 package io.wkrzywiec.fooddelivery.domain.delivery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.*;
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled;
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated;
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
 import io.wkrzywiec.fooddelivery.infra.messaging.Header;
@@ -13,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Clock;
 import java.util.UUID;
+
+import static java.lang.String.format;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -46,8 +51,16 @@ public class DeliveryFacade {
         log.info("New delivery with an id: '{}' was created", savedDelivery.getId());
     }
 
-    public void handle(OrderCanceled cancelDelivery) {
+    public void handle(OrderCanceled orderCanceled) {
+        log.info("'{}' order was canceled. Canceling delivery", orderCanceled.id());
 
+        var delivery = repository.findByOrderId(orderCanceled.id())
+                .orElseThrow(() -> new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.id())));
+
+        Try.run(() -> delivery.cancel(orderCanceled.reason()))
+                .onSuccess(v -> publishSuccessEvent(delivery.getId(), new DeliveryCanceled(delivery.getId(), orderCanceled.id(), orderCanceled.reason())))
+                .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to cancel an delivery.", ex))
+                .andFinally(() -> log.info("Cancellation of a delivery '{}' has been completed", delivery.getId()));
     }
 
     public void handle(PrepareFood prepareFood) {
@@ -72,6 +85,18 @@ public class DeliveryFacade {
 
     public void handle(DeliverFood deliverFood) {
 
+    }
+
+    private void publishSuccessEvent(String orderId, Object eventObject) {
+        log.info("Publishing success event: {}", eventObject);
+        Message event = resultingEvent(orderId, eventObject);
+        publisher.send(event);
+    }
+
+    private void publishingFailureEvent(String id, String message, Throwable ex) {
+        log.error(message + " Publishing DeliveryProcessingError event", ex);
+        Message event = resultingEvent(id, new DeliveryProcessingError(id, message, ex.getLocalizedMessage()));
+        publisher.send(event);
     }
 
     private Message resultingEvent(String deliveryId, Object eventBody) {

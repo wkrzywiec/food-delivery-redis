@@ -34,6 +34,7 @@ import static java.lang.String.format;
      Delivery entity() {
         Delivery delivery = createAnEmptyDelivery();
         setValue(delivery, "id", id);
+         setValue(delivery, "orderId", orderId);
         setValue(delivery, "customerId", customerId);
         setValue(delivery, "restaurantId", restaurantId);
         setValue(delivery, "deliveryManId", deliveryManId);
@@ -42,6 +43,7 @@ import static java.lang.String.format;
         setValue(delivery, "items", items.stream().map(ItemTestData::entity).toList());
         setValue(delivery, "deliveryCharge", deliveryCharge);
         setValue(delivery, "tip", tip);
+         setValue(delivery, "total", total);
         setValue(delivery, "metadata", metadata);
 
         return delivery;

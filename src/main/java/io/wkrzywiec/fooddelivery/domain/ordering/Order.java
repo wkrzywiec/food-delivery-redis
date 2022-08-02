@@ -78,7 +78,7 @@ class Order {
         if (status != OrderStatus.CREATED) {
             throw new OrderingException(format("Failed to cancel an %s order. It's not possible to cancel an order with '%s' status", id, status));
         }
-        this.status = CANCELLED;
+        this.status = CANCELED;
 
         if (reason != null) {
             metadata.put("cancellationReason", reason);

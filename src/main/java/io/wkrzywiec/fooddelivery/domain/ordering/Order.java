@@ -1,16 +1,12 @@
 package io.wkrzywiec.fooddelivery.domain.ordering;
 
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CreateOrder;
-import io.wkrzywiec.fooddelivery.infra.messaging.Message;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -26,9 +22,6 @@ import static java.lang.String.format;
 @ToString
 class Order {
 
-    @Id
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
     private String id;
     private String customerId;
     private String restaurantId;

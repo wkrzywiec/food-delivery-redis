@@ -1,9 +1,11 @@
 package io.wkrzywiec.fooddelivery.domain.delivery
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
@@ -102,9 +104,10 @@ class DeliveryFacadeSpec extends Specification {
         with(repository.database.values()[0]) { cancelledDelivery ->
             cancelledDelivery.status == DeliveryStatus.CANCELED
             cancelledDelivery.metadata.get("cancellationReason") == cancellationReason
+            cancelledDelivery.metadata.get("cancellationTimestamp") == testTime.toString()
         }
 
-        and: "DeliveryCancelled event is published on 'ordering' channel"
+        and: "DeliveryCancelled event is published on 'delivery' channel"
         with(publisher.messages.get("delivery").get(0)) {event ->
 
             verifyEventHeader(event, delivery.id, "DeliveryCanceled")
@@ -116,7 +119,7 @@ class DeliveryFacadeSpec extends Specification {
         }
     }
 
-    def "Fail to cancel a #status order"() {
+    def "Fail to cancel a #status delivery"() {
         given:
         var delivery = aDelivery().withStatus(status)
         repository.save(delivery.entity())
@@ -127,12 +130,12 @@ class DeliveryFacadeSpec extends Specification {
         when:
         facade.handle(cancelOrder)
 
-        then: "Delivery is canceled"
+        then: "Delivery is not canceled"
         with(repository.findById(delivery.id).get()) { cancelledOrder ->
             cancelledOrder.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'ordering' channel"
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
         with(publisher.messages.get("delivery").get(0)) {event ->
 
             verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
@@ -143,7 +146,65 @@ class DeliveryFacadeSpec extends Specification {
         }
 
         where:
-        status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+        status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+    }
+
+    def "Food in preparation"() {
+        given:
+        var delivery = aDelivery()
+        repository.save(delivery.entity())
+
+        and:
+        var prepareFood = new PrepareFood(delivery.id)
+
+        when:
+        facade.handle(prepareFood)
+
+        then: "Delivery is set to food in preparation status"
+        with(repository.database.values()[0]) { cancelledDelivery ->
+            cancelledDelivery.status == DeliveryStatus.FOOD_IN_PREPARATION
+            cancelledDelivery.metadata.get("startFoodPreparationTimestamp") == testTime.toString()
+        }
+
+        and: "FoodInPreparation event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "FoodInPreparation")
+
+            def body = deserializeJson(event.body(), FoodInPreparation)
+            body.deliveryId() == delivery.id
+            body.orderId() == delivery.orderId
+        }
+    }
+
+    def "Fail to set #status delivery to be in food preparation state"() {
+        given:
+        var delivery = aDelivery().withStatus(status)
+        repository.save(delivery.entity())
+
+        and:
+        var prepareFood = new PrepareFood(delivery.id)
+
+        when:
+        facade.handle(prepareFood)
+
+        then: "Delivery is not in food preparation state"
+        with(repository.findById(delivery.id).get()) { cancelledOrder ->
+            cancelledOrder.status == delivery.getStatus()
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to start food preparation for a '$delivery.id' delivery. It's not possible to cancel a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
     }
 
     private void verifyEventHeader(Message event, String deliveryId, String eventType) {

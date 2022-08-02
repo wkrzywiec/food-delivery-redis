@@ -1,4 +1,4 @@
 package io.wkrzywiec.fooddelivery.domain.delivery.incoming;
 
-public record PrepareFood() {
+public record PrepareFood(String deliveryId) {
 }

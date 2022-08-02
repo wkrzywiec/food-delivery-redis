@@ -20,6 +20,6 @@ public class FakeMessagePublisher implements MessagePublisher {
       messagesInChannel.add(message);
       messages.put(message.header().channel(), messagesInChannel);
 
-      log.info("'{}' message was published on channel: '{}', body: '{}'", message.header().type(), message.header().channel(), message.body());
+      log.info("'{}' message was published on channel: '{}', full message: '{}'", message.header().type(), message.header().channel(), message);
     }
 }

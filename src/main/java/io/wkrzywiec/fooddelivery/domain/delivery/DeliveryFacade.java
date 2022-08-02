@@ -6,6 +6,7 @@ import io.wkrzywiec.fooddelivery.domain.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled;
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated;
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError;
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
 import io.wkrzywiec.fooddelivery.infra.messaging.Header;
@@ -31,7 +32,7 @@ public class DeliveryFacade {
     public void handle(OrderCreated orderCreated) {
         log.info("Preparing a delivery for an '{}' order.", orderCreated.id());
 
-        Delivery newDelivery = Delivery.from(orderCreated);
+        Delivery newDelivery = Delivery.from(orderCreated, clock.instant());
         var savedDelivery = repository.save(newDelivery);
 
         Message event = resultingEvent(
@@ -57,14 +58,22 @@ public class DeliveryFacade {
         var delivery = repository.findByOrderId(orderCanceled.id())
                 .orElseThrow(() -> new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.id())));
 
-        Try.run(() -> delivery.cancel(orderCanceled.reason()))
+        Try.run(() -> delivery.cancel(orderCanceled.reason(), clock.instant()))
                 .onSuccess(v -> publishSuccessEvent(delivery.getId(), new DeliveryCanceled(delivery.getId(), orderCanceled.id(), orderCanceled.reason())))
                 .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to cancel an delivery.", ex))
                 .andFinally(() -> log.info("Cancellation of a delivery '{}' has been completed", delivery.getId()));
     }
 
     public void handle(PrepareFood prepareFood) {
+        log.info("Starting food preparation for '{}' delivery", prepareFood.deliveryId());
 
+        var delivery = repository.findById(prepareFood.deliveryId())
+                .orElseThrow(() -> new DeliveryException(format("Failed to start food preparation for a delivery. There is no delivery with an id '%s'.", prepareFood.deliveryId())));
+
+        Try.run(() -> delivery.foodInPreparation(clock.instant()))
+                .onSuccess(v -> publishSuccessEvent(delivery.getId(), new FoodInPreparation(delivery.getId(), delivery.getOrderId())))
+                .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to start food preparation.", ex))
+                .andFinally(() -> log.info("Food in preparation of a delivery '{}' has been completed", delivery.getId()));
     }
 
     public void handle(AssignedDeliveryMan assignedDeliveryMan) {

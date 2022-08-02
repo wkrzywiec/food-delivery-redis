@@ -3,10 +3,7 @@ package io.wkrzywiec.fooddelivery.domain.delivery;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.*;
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled;
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated;
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError;
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation;
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.*;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
 import io.wkrzywiec.fooddelivery.infra.messaging.Header;
@@ -76,8 +73,16 @@ public class DeliveryFacade {
                 .andFinally(() -> log.info("Food in preparation of a delivery '{}' has been completed", delivery.getId()));
     }
 
-    public void handle(AssignedDeliveryMan assignedDeliveryMan) {
+    public void handle(AssignDeliveryMan assignDeliveryMan) {
+        log.info("Assigning a delivery man with id: '{}' to a '{}' delivery", assignDeliveryMan.deliveryManId(), assignDeliveryMan.deliveryId());
 
+        var delivery = repository.findById(assignDeliveryMan.deliveryId())
+                .orElseThrow(() -> new DeliveryException(format("Failed to assign delivery man to a delivery. There is no delivery with an id '%s'.", assignDeliveryMan.deliveryId())));
+
+        Try.run(() -> delivery.assignDeliveryMan(assignDeliveryMan.deliveryManId(), clock.instant()))
+                .onSuccess(v -> publishSuccessEvent(delivery.getId(), new DeliveryManAssigned(delivery.getId(), delivery.getDeliveryManId())))
+                .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to assign delivery man.", ex))
+                .andFinally(() -> log.info("Assigning a delivery man to a '{}' delivery has been completed", delivery.getId()));
     }
 
     public void handle(UnAssignDeliveryMan unAssignDeliveryMan) {

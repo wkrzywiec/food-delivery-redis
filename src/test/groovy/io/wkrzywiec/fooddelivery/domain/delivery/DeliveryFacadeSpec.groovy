@@ -1,9 +1,11 @@
 package io.wkrzywiec.fooddelivery.domain.delivery
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.AssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
@@ -205,6 +207,98 @@ class DeliveryFacadeSpec extends Specification {
 
         where:
         status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+    }
+
+    def "Assign delivery man to delivery"() {
+        given:
+        var delivery = aDelivery().withDeliveryManId(null)
+        repository.save(delivery.entity())
+
+        and:
+        var deliveryManId = "any-delivery-man-id"
+        var assignDeliveryMan = new AssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "Delivery man has been assigned"
+        with(repository.database.values()[0]) { cancelledDelivery ->
+            cancelledDelivery.deliveryManId == deliveryManId
+            cancelledDelivery.metadata.get("assignDeliveryManTimestamp") == testTime.toString()
+        }
+
+        and: "DeliveryManAssigned event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryManAssigned")
+
+            def body = deserializeJson(event.body(), DeliveryManAssigned)
+            body.deliveryId() == delivery.id
+            body.deliveryManId() == deliveryManId
+        }
+    }
+
+    def "Fail to assign delivery man for #status delivery"() {
+        given:
+        var delivery = aDelivery()
+                .withStatus(status)
+                .withDeliveryManId(null)
+        repository.save(delivery.entity())
+
+        and:
+        var deliveryManId = "any-delivery-man-id"
+        var assignDeliveryMan = new AssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "Delivery man was not assigned"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.deliveryManId == null
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to assign a delivery man to a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+    }
+
+    def "Fail to assign delivery man if it's already assigned"() {
+        given:
+        def oldDeliveryManId = "old-delivery-man"
+        def delivery = aDelivery()
+                .withDeliveryManId(oldDeliveryManId)
+        repository.save(delivery.entity())
+
+        and:
+        def deliveryManId = "any-delivery-man-id"
+        def assignDeliveryMan = new AssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "Delivery man has not been changed"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.deliveryManId == oldDeliveryManId
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to assign delivery man to a '$delivery.id' delivery. There is already a delivery man assigned with an id $oldDeliveryManId"
+        }
     }
 
     private void verifyEventHeader(Message event, String deliveryId, String eventType) {

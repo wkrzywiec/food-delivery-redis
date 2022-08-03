@@ -84,7 +84,7 @@ public class DeliveryFacade {
 
         process(
                 delivery,
-                () -> delivery.assignDeliveryMan(assignDeliveryMan.deliveryManId(), clock.instant()),
+                () -> delivery.assignDeliveryMan(assignDeliveryMan.deliveryManId()),
                 new DeliveryManAssigned(delivery.getId(), assignDeliveryMan.deliveryManId()),
                 "Failed to assign delivery man."
         );
@@ -97,7 +97,7 @@ public class DeliveryFacade {
 
         process(
                 delivery,
-                () -> delivery.unAssignDeliveryMan(unAssignDeliveryMan.deliveryManId(), clock.instant()),
+                () -> delivery.unAssignDeliveryMan(unAssignDeliveryMan.deliveryManId()),
                 new DeliveryManUnAssigned(delivery.getId(), delivery.getDeliveryManId()),
                 "Failed to un assign delivery man."
         );
@@ -105,7 +105,16 @@ public class DeliveryFacade {
 
 
     public void handle(FoodReady foodReady) {
+        log.info("Starting food ready for '{}' delivery", foodReady.deliveryId());
 
+        var delivery = findDelivery(foodReady.deliveryId());
+
+        process(
+                delivery,
+                () -> delivery.foodReady(clock.instant()),
+                new FoodIsReady(delivery.getId()),
+                "Failed to set food as ready."
+        );
     }
 
     public void handle(PickUpFood pickUpFood) {

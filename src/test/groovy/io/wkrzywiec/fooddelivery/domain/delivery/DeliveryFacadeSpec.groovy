@@ -2,6 +2,7 @@ package io.wkrzywiec.fooddelivery.domain.delivery
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.AssignDeliveryMan
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.FoodReady
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.UnAssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled
@@ -10,6 +11,7 @@ import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManUnAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsReady
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
@@ -146,7 +148,7 @@ class DeliveryFacadeSpec extends Specification {
 
             def body = deserializeJson(event.body(), DeliveryProcessingError)
             body.id() == delivery.id
-            body.details() == "Failed to cancel a $delivery.id delivery. It's not possible to cancel a delivery with '$status' status"
+            body.details() == "Failed to cancel a $delivery.id delivery. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -165,9 +167,9 @@ class DeliveryFacadeSpec extends Specification {
         facade.handle(prepareFood)
 
         then: "Delivery is set to food in preparation status"
-        with(repository.database.values()[0]) { cancelledDelivery ->
-            cancelledDelivery.status == DeliveryStatus.FOOD_IN_PREPARATION
-            cancelledDelivery.metadata.get("startFoodPreparationTimestamp") == testTime.toString()
+        with(repository.database.values()[0]) { deliveryEntity ->
+            deliveryEntity.status == DeliveryStatus.FOOD_IN_PREPARATION
+            deliveryEntity.metadata.get("foodPreparationTimestamp") == testTime.toString()
         }
 
         and: "FoodInPreparation event is published on 'delivery' channel"
@@ -193,8 +195,8 @@ class DeliveryFacadeSpec extends Specification {
         facade.handle(prepareFood)
 
         then: "Delivery is not in food preparation state"
-        with(repository.findById(delivery.id).get()) { cancelledOrder ->
-            cancelledOrder.status == delivery.getStatus()
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.status == delivery.getStatus()
         }
 
         and: "DeliveryProcessingError event is published on 'delivery' channel"
@@ -204,7 +206,7 @@ class DeliveryFacadeSpec extends Specification {
 
             def body = deserializeJson(event.body(), DeliveryProcessingError)
             body.id() == delivery.id
-            body.details() == "Failed to start food preparation for a '$delivery.id' delivery. It's not possible to cancel a delivery with '$status' status"
+            body.details() == "Failed to start food preparation for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -226,7 +228,6 @@ class DeliveryFacadeSpec extends Specification {
         then: "Delivery man has been assigned"
         with(repository.database.values()[0]) { cancelledDelivery ->
             cancelledDelivery.deliveryManId == deliveryManId
-            cancelledDelivery.metadata.get("assignDeliveryManTimestamp") == testTime.toString()
         }
 
         and: "DeliveryManAssigned event is published on 'delivery' channel"
@@ -318,7 +319,6 @@ class DeliveryFacadeSpec extends Specification {
         then: "Delivery man has been un assigned"
         with(repository.database.values()[0]) { cancelledDelivery ->
             cancelledDelivery.deliveryManId == null
-            cancelledDelivery.metadata.get("unAssignDeliveryManTimestamp") == testTime.toString()
         }
 
         and: "DeliveryManUnAssigned event is published on 'delivery' channel"
@@ -417,6 +417,64 @@ class DeliveryFacadeSpec extends Specification {
             body.id() == delivery.id
             body.details() == "Failed to un assign delivery man from a '$delivery.id' delivery. There is no delivery man assigned to this delivery"
         }
+    }
+
+    def "Food is ready"() {
+        given:
+        var delivery = aDelivery()
+                .withStatus(DeliveryStatus.FOOD_IN_PREPARATION)
+        repository.save(delivery.entity())
+
+        and:
+        var foodReady = new FoodReady(delivery.id)
+
+        when:
+        facade.handle(foodReady)
+
+        then: "Delivery is set to food is ready status"
+        with(repository.database.values()[0]) { deliveryEntity ->
+            deliveryEntity.status == DeliveryStatus.FOOD_READY
+            deliveryEntity.metadata.get("foodReadyTimestamp") == testTime.toString()
+        }
+
+        and: "FoodIsRead event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "FoodIsRead")
+
+            def body = deserializeJson(event.body(), FoodIsReady)
+            body.deliveryId() == delivery.id
+        }
+    }
+
+    def "Fail to set #status delivery to be in food is ready state"() {
+        given:
+        var delivery = aDelivery().withStatus(status)
+        repository.save(delivery.entity())
+
+        and:
+        var foodReady = new FoodReady(delivery.id)
+
+        when:
+        facade.handle(foodReady)
+
+        then: "Delivery is not in food ready state"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.status == delivery.getStatus()
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to set food ready for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CREATED, DeliveryStatus.CANCELED, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
     }
 
     private void verifyEventHeader(Message event, String deliveryId, String eventType) {

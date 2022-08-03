@@ -65,7 +65,7 @@ class Delivery {
 
     public void cancel(String reason, Instant cancellationTimestamp) {
         if (status != CREATED) {
-            throw new DeliveryException(format("Failed to cancel a %s delivery. It's not possible to cancel a delivery with '%s' status", id, status));
+            throw new DeliveryException(format("Failed to cancel a %s delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
         this.status = CANCELED;
         metadata.put("cancellationTimestamp", cancellationTimestamp.toString());
@@ -75,15 +75,23 @@ class Delivery {
         }
     }
 
-    public void foodInPreparation(Instant startFoodPreparationTimestamp) {
+    public void foodInPreparation(Instant foodPreparationTimestamp) {
         if (status != CREATED) {
-            throw new DeliveryException(format("Failed to start food preparation for a '%s' delivery. It's not possible to cancel a delivery with '%s' status", id, status));
+            throw new DeliveryException(format("Failed to start food preparation for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
         this.status = FOOD_IN_PREPARATION;
-        metadata.put("startFoodPreparationTimestamp", startFoodPreparationTimestamp.toString());
+        metadata.put("foodPreparationTimestamp", foodPreparationTimestamp.toString());
     }
 
-    public void assignDeliveryMan(String deliveryManId, Instant assignDeliveryManTimestamp) {
+    public void foodReady(Instant foodReadyTimestamp) {
+        if (status != FOOD_IN_PREPARATION) {
+            throw new DeliveryException(format("Failed to set food ready for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
+        }
+        this.status = FOOD_READY;
+        metadata.put("foodReadyTimestamp", foodReadyTimestamp.toString());
+    }
+
+    public void assignDeliveryMan(String deliveryManId) {
         if (this.deliveryManId != null) {
             throw new DeliveryException(format("Failed to assign delivery man to a '%s' delivery. There is already a delivery man assigned with an id %s", id, this.deliveryManId));
         }
@@ -93,10 +101,9 @@ class Delivery {
         }
 
         this.deliveryManId = deliveryManId;
-        metadata.put("assignDeliveryManTimestamp", assignDeliveryManTimestamp.toString());
     }
 
-    public void unAssignDeliveryMan(String deliveryManId, Instant unAssignDeliveryManTimestamp) {
+    public void unAssignDeliveryMan(String deliveryManId) {
         if (this.deliveryManId == null) {
             throw new DeliveryException(format("Failed to un assign delivery man from a '%s' delivery. There is no delivery man assigned to this delivery", id));
         }
@@ -110,6 +117,5 @@ class Delivery {
         }
 
         this.deliveryManId = null;
-        metadata.put("unAssignDeliveryManTimestamp", unAssignDeliveryManTimestamp.toString());
     }
 }

@@ -3,9 +3,11 @@ package io.wkrzywiec.fooddelivery.domain.delivery
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.AssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.UnAssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManAssigned
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManUnAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
@@ -298,6 +300,122 @@ class DeliveryFacadeSpec extends Specification {
             def body = deserializeJson(event.body(), DeliveryProcessingError)
             body.id() == delivery.id
             body.details() == "Failed to assign delivery man to a '$delivery.id' delivery. There is already a delivery man assigned with an id $oldDeliveryManId"
+        }
+    }
+
+    def "Un assign delivery man from delivery"() {
+        given:
+        var deliveryManId = "any-delivery-man-id"
+        var delivery = aDelivery().withDeliveryManId(deliveryManId)
+        repository.save(delivery.entity())
+
+        and:
+        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "Delivery man has been un assigned"
+        with(repository.database.values()[0]) { cancelledDelivery ->
+            cancelledDelivery.deliveryManId == null
+            cancelledDelivery.metadata.get("unAssignDeliveryManTimestamp") == testTime.toString()
+        }
+
+        and: "DeliveryManUnAssigned event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryManUnAssigned")
+
+            def body = deserializeJson(event.body(), DeliveryManUnAssigned)
+            body.deliveryId() == delivery.id
+            body.deliveryManId() == deliveryManId
+        }
+    }
+
+    def "Fail to un assign delivery man from #status delivery"() {
+        given:
+        var deliveryManId = "any-delivery-man-id"
+        var delivery = aDelivery()
+                .withStatus(status)
+                .withDeliveryManId(deliveryManId)
+        repository.save(delivery.entity())
+
+        and:
+        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "Delivery man was not un assigned"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.deliveryManId == deliveryManId
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to un assign a delivery man from a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+    }
+
+    def "Fail to un assign delivery man if it's not assigned"() {
+        given:
+        def otherDeliveryManId = "other-delivery-man"
+        def delivery = aDelivery()
+                .withDeliveryManId(otherDeliveryManId)
+        repository.save(delivery.entity())
+
+        and:
+        def deliveryManId = "any-delivery-man-id"
+        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "Delivery man has not been changed"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.deliveryManId == otherDeliveryManId
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to un assign delivery man from a '$delivery.id' delivery. Delivery has assigned '$otherDeliveryManId' person, but was asked to un assign '$deliveryManId'"
+        }
+    }
+
+    def "Fail to un assign delivery man if there is no one assigned"() {
+        given:
+        def delivery = aDelivery()
+                .withDeliveryManId(null)
+        repository.save(delivery.entity())
+
+        and:
+        def deliveryManId = "any-delivery-man-id"
+        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+
+        when:
+        facade.handle(assignDeliveryMan)
+
+        then: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to un assign delivery man from a '$delivery.id' delivery. There is no delivery man assigned to this delivery"
         }
     }
 

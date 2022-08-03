@@ -95,4 +95,21 @@ class Delivery {
         this.deliveryManId = deliveryManId;
         metadata.put("assignDeliveryManTimestamp", assignDeliveryManTimestamp.toString());
     }
+
+    public void unAssignDeliveryMan(String deliveryManId, Instant unAssignDeliveryManTimestamp) {
+        if (this.deliveryManId == null) {
+            throw new DeliveryException(format("Failed to un assign delivery man from a '%s' delivery. There is no delivery man assigned to this delivery", id));
+        }
+
+        if (!this.deliveryManId.equals(deliveryManId)) {
+            throw new DeliveryException(format("Failed to un assign delivery man from a '%s' delivery. Delivery has assigned '%s' person, but was asked to un assign '%s'", id, this.deliveryManId, deliveryManId));
+        }
+
+        if (List.of(CANCELED, FOOD_PICKED, FOOD_DELIVERED).contains(status)) {
+            throw new DeliveryException(format("Failed to un assign a delivery man from a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
+        }
+
+        this.deliveryManId = null;
+        metadata.put("unAssignDeliveryManTimestamp", unAssignDeliveryManTimestamp.toString());
+    }
 }

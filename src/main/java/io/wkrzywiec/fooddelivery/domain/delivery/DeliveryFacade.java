@@ -1,6 +1,7 @@
 package io.wkrzywiec.fooddelivery.domain.delivery;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.*;
@@ -55,39 +56,53 @@ public class DeliveryFacade {
         var delivery = repository.findByOrderId(orderCanceled.id())
                 .orElseThrow(() -> new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.id())));
 
-        Try.run(() -> delivery.cancel(orderCanceled.reason(), clock.instant()))
-                .onSuccess(v -> publishSuccessEvent(delivery.getId(), new DeliveryCanceled(delivery.getId(), orderCanceled.id(), orderCanceled.reason())))
-                .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to cancel an delivery.", ex))
-                .andFinally(() -> log.info("Cancellation of a delivery '{}' has been completed", delivery.getId()));
+        process(
+                delivery,
+                () -> delivery.cancel(orderCanceled.reason(), clock.instant()),
+                new DeliveryCanceled(delivery.getId(), orderCanceled.id(), orderCanceled.reason()),
+                "Failed to cancel an delivery."
+        );
     }
 
     public void handle(PrepareFood prepareFood) {
         log.info("Starting food preparation for '{}' delivery", prepareFood.deliveryId());
 
-        var delivery = repository.findById(prepareFood.deliveryId())
-                .orElseThrow(() -> new DeliveryException(format("Failed to start food preparation for a delivery. There is no delivery with an id '%s'.", prepareFood.deliveryId())));
+        var delivery = findDelivery(prepareFood.deliveryId());
 
-        Try.run(() -> delivery.foodInPreparation(clock.instant()))
-                .onSuccess(v -> publishSuccessEvent(delivery.getId(), new FoodInPreparation(delivery.getId(), delivery.getOrderId())))
-                .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to start food preparation.", ex))
-                .andFinally(() -> log.info("Food in preparation of a delivery '{}' has been completed", delivery.getId()));
+        process(
+                delivery,
+                () -> delivery.foodInPreparation(clock.instant()),
+                new FoodInPreparation(delivery.getId(), delivery.getOrderId()),
+                "Failed to start food preparation."
+        );
     }
 
     public void handle(AssignDeliveryMan assignDeliveryMan) {
         log.info("Assigning a delivery man with id: '{}' to a '{}' delivery", assignDeliveryMan.deliveryManId(), assignDeliveryMan.deliveryId());
 
-        var delivery = repository.findById(assignDeliveryMan.deliveryId())
-                .orElseThrow(() -> new DeliveryException(format("Failed to assign delivery man to a delivery. There is no delivery with an id '%s'.", assignDeliveryMan.deliveryId())));
+        var delivery = findDelivery(assignDeliveryMan.deliveryId());
 
-        Try.run(() -> delivery.assignDeliveryMan(assignDeliveryMan.deliveryManId(), clock.instant()))
-                .onSuccess(v -> publishSuccessEvent(delivery.getId(), new DeliveryManAssigned(delivery.getId(), delivery.getDeliveryManId())))
-                .onFailure(ex -> publishingFailureEvent(delivery.getId(), "Failed to assign delivery man.", ex))
-                .andFinally(() -> log.info("Assigning a delivery man to a '{}' delivery has been completed", delivery.getId()));
+        process(
+                delivery,
+                () -> delivery.assignDeliveryMan(assignDeliveryMan.deliveryManId(), clock.instant()),
+                new DeliveryManAssigned(delivery.getId(), assignDeliveryMan.deliveryManId()),
+                "Failed to assign delivery man."
+        );
     }
 
     public void handle(UnAssignDeliveryMan unAssignDeliveryMan) {
+        log.info("Un assigning a delivery man with id: '{}' from a '{}' delivery", unAssignDeliveryMan.deliveryManId(), unAssignDeliveryMan.deliveryId());
 
+        var delivery = findDelivery(unAssignDeliveryMan.deliveryId());
+
+        process(
+                delivery,
+                () -> delivery.unAssignDeliveryMan(unAssignDeliveryMan.deliveryManId(), clock.instant()),
+                new DeliveryManUnAssigned(delivery.getId(), delivery.getDeliveryManId()),
+                "Failed to un assign delivery man."
+        );
     }
+
 
     public void handle(FoodReady foodReady) {
 
@@ -100,6 +115,17 @@ public class DeliveryFacade {
     public void handle(DeliverFood deliverFood) {
 
     }
+
+    private Delivery findDelivery(String deliveryId) {
+        return repository.findById(deliveryId)
+                .orElseThrow(() -> new DeliveryException(format("There is no delivery with an id '%s'.", deliveryId)));
+    }
+
+    private void process(Delivery delivery, CheckedRunnable runProcess, Object successEvent, String failureMessage) {
+        Try.run(runProcess)
+                .onSuccess(v -> publishSuccessEvent(delivery.getId(), successEvent))
+                .onFailure(ex -> publishingFailureEvent(delivery.getId(), failureMessage, ex));
+    };
 
     private void publishSuccessEvent(String orderId, Object eventObject) {
         log.info("Publishing success event: {}", eventObject);

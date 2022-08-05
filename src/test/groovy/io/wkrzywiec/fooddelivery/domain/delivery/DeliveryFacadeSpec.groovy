@@ -3,6 +3,7 @@ package io.wkrzywiec.fooddelivery.domain.delivery
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.AssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.FoodReady
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PickUpFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.UnAssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCanceled
@@ -11,6 +12,7 @@ import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManUnAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsPickedUp
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsReady
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
@@ -475,6 +477,64 @@ class DeliveryFacadeSpec extends Specification {
 
         where:
         status << [DeliveryStatus.CREATED, DeliveryStatus.CANCELED, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+    }
+
+    def "Food is picked up"() {
+        given:
+        var delivery = aDelivery()
+                .withStatus(DeliveryStatus.FOOD_READY)
+        repository.save(delivery.entity())
+
+        and:
+        var pickUpFood = new PickUpFood(delivery.id)
+
+        when:
+        facade.handle(pickUpFood)
+
+        then: "Delivery is set to food is picked up status"
+        with(repository.database.values()[0]) { deliveryEntity ->
+            deliveryEntity.status == DeliveryStatus.FOOD_PICKED
+            deliveryEntity.metadata.get("foodPickedUpTimestamp") == testTime.toString()
+        }
+
+        and: "FoodIsPickedUp event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "FoodIsPickedUp")
+
+            def body = deserializeJson(event.body(), FoodIsPickedUp)
+            body.deliveryId() == delivery.id
+        }
+    }
+
+    def "Fail to set #status delivery to be in food is picked up state"() {
+        given:
+        var delivery = aDelivery().withStatus(status)
+        repository.save(delivery.entity())
+
+        and:
+        var pickUpFood = new PickUpFood(delivery.id)
+
+        when:
+        facade.handle(pickUpFood)
+
+        then: "Delivery is not in food picked up state"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.status == delivery.getStatus()
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to set food as picked up for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CREATED, DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
     }
 
     private void verifyEventHeader(Message event, String deliveryId, String eventType) {

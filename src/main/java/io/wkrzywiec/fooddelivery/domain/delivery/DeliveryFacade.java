@@ -118,7 +118,16 @@ public class DeliveryFacade {
     }
 
     public void handle(PickUpFood pickUpFood) {
+        log.info("Starting picking up food for '{}' delivery", pickUpFood.deliveryId());
 
+        var delivery = findDelivery(pickUpFood.deliveryId());
+
+        process(
+                delivery,
+                () -> delivery.pickUpFood(clock.instant()),
+                new FoodIsPickedUp(delivery.getId()),
+                "Failed to set food as picked up."
+        );
     }
 
     public void handle(DeliverFood deliverFood) {

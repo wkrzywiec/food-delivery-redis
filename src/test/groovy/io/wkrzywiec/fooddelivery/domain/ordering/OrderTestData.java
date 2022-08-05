@@ -3,9 +3,7 @@ package io.wkrzywiec.fooddelivery.domain.ordering;
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CreateOrder;
 import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -14,12 +12,11 @@ import static io.wkrzywiec.fooddelivery.domain.ordering.OrderStatus.CREATED;
 import static java.lang.String.format;
 
 @Getter
-public class OrderTestData {
+ class OrderTestData {
 
     private String id = UUID.randomUUID().toString();
     private String customerId = "default-customer-id";
     private String restaurantId = "default-restaurant-id";
-    private String deliveryManId = null;
     private OrderStatus status = CREATED;
     private String address = "Pizza street, Naples, Italy";
     private List<ItemTestData> items = List.of(anItem());
@@ -29,16 +26,15 @@ public class OrderTestData {
 
     private OrderTestData() {};
 
-    public static OrderTestData anOrder() {
+     static OrderTestData anOrder() {
         return new OrderTestData();
     }
 
-    public Order entity() {
+     Order entity() {
         Order order = createAnEmptyOrder();
         setValue(order, "id", id);
         setValue(order, "customerId", customerId);
         setValue(order, "restaurantId", restaurantId);
-        setValue(order, "deliveryManId", deliveryManId);
         setValue(order, "status", status);
         setValue(order, "address", address);
         setValue(order, "items", items.stream().map(ItemTestData::entity).toList());
@@ -50,56 +46,51 @@ public class OrderTestData {
         return order;
     }
 
-    public CreateOrder createOrder() {
+     CreateOrder createOrder() {
         return new CreateOrder(id, customerId, restaurantId, items.stream().map(ItemTestData::dto).toList(), address, deliveryCharge);
     }
 
-    public OrderTestData withId(String id) {
+     OrderTestData withId(String id) {
         this.id = id;
         return this;
     }
 
-    public OrderTestData withCustomerId(String customerId) {
+     OrderTestData withCustomerId(String customerId) {
         this.customerId = customerId;
         return this;
     }
 
-    public OrderTestData withRestaurantId(String restaurantId) {
+     OrderTestData withRestaurantId(String restaurantId) {
         this.restaurantId = restaurantId;
         return this;
     }
 
-    public OrderTestData withDeliveryManId(String deliveryManId) {
-        this.deliveryManId = deliveryManId;
-        return this;
-    }
-
-    public OrderTestData withStatus(OrderStatus status) {
+     OrderTestData withStatus(OrderStatus status) {
         this.status = status;
         return this;
     }
 
-    public OrderTestData withAddress(String address) {
+     OrderTestData withAddress(String address) {
         this.address = address;
         return this;
     }
 
-    public OrderTestData withItems(ItemTestData... items) {
+     OrderTestData withItems(ItemTestData... items) {
         this.items = Arrays.asList(items);
         return this;
     }
 
-    public OrderTestData withDeliveryCharge(double deliveryCharge) {
+     OrderTestData withDeliveryCharge(double deliveryCharge) {
         this.deliveryCharge = new BigDecimal(deliveryCharge);
         return this;
     }
 
-    public OrderTestData withTip(BigDecimal tip) {
+     OrderTestData withTip(BigDecimal tip) {
         this.tip = tip;
         return this;
     }
 
-    public OrderTestData withMetadata(Map<String, String> metadata) {
+     OrderTestData withMetadata(Map<String, String> metadata) {
         this.metadata = metadata;
         return this;
     }

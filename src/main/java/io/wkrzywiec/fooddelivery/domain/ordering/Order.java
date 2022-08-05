@@ -1,15 +1,12 @@
 package io.wkrzywiec.fooddelivery.domain.ordering;
 
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CreateOrder;
-import io.wkrzywiec.fooddelivery.infra.messaging.Message;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -27,12 +24,9 @@ import static java.lang.String.format;
 class Order {
 
     @Id
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
     private String id;
     private String customerId;
     private String restaurantId;
-    private String deliveryManId;
     private OrderStatus status = CREATED;
     private String address;
     @Type(type = "io.wkrzywiec.fooddelivery.domain.ordering.ItemType")
@@ -86,7 +80,7 @@ class Order {
         if (status != OrderStatus.CREATED) {
             throw new OrderingException(format("Failed to cancel an %s order. It's not possible to cancel an order with '%s' status", id, status));
         }
-        this.status = CANCELLED;
+        this.status = CANCELED;
 
         if (reason != null) {
             metadata.put("cancellationReason", reason);

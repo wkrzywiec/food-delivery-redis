@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.domain.ordering;
+package io.wkrzywiec.fooddelivery.domain.delivery;
 
 import lombok.Getter;
 
@@ -21,8 +21,8 @@ class ItemTestData {
                 .build();
     }
 
-    io.wkrzywiec.fooddelivery.domain.ordering.incoming.Item dto() {
-        return new io.wkrzywiec.fooddelivery.domain.ordering.incoming.Item(name, amount, pricePerItem);
+    io.wkrzywiec.fooddelivery.domain.delivery.outgoing.Item dto() {
+        return new io.wkrzywiec.fooddelivery.domain.delivery.outgoing.Item(name, amount, pricePerItem);
     }
 
     static ItemTestData anItem() {

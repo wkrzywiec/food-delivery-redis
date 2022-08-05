@@ -56,7 +56,6 @@ class OrderingFacadeSpec extends Specification {
             savedOrder.id != null
             savedOrder.customerId == order.getCustomerId()
             savedOrder.restaurantId == order.getRestaurantId()
-            savedOrder.deliveryManId == null
             savedOrder.address == order.getAddress()
             savedOrder.items == order.getItems().stream().map(ItemTestData::entity).toList()
             savedOrder.status == OrderStatus.CREATED
@@ -97,7 +96,7 @@ class OrderingFacadeSpec extends Specification {
 
         then: "Order is canceled"
         with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == OrderStatus.CANCELLED
+            cancelledOrder.status == OrderStatus.CANCELED
             cancelledOrder.metadata.get("cancellationReason") == cancellationReason
         }
 
@@ -139,7 +138,7 @@ class OrderingFacadeSpec extends Specification {
         }
 
         where:
-        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     def "Set order to IN_PROGRESS"() {
@@ -148,7 +147,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodInPreparation = new FoodInPreparation(order.id)
+        var foodInPreparation = new FoodInPreparation("any-delivery-id", order.id)
 
         when:
         facade.handle(foodInPreparation)
@@ -174,7 +173,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodInPreparation = new FoodInPreparation(order.id)
+        var foodInPreparation = new FoodInPreparation("any-delivery-id", order.id)
 
         when:
         facade.handle(foodInPreparation)
@@ -195,7 +194,7 @@ class OrderingFacadeSpec extends Specification {
         }
 
         where:
-        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     def "Add tip to an order"() {
@@ -240,7 +239,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodDelivered = new FoodDelivered(order.id)
+        var foodDelivered = new FoodDelivered("any-delivery-id", order.id)
 
         when:
         facade.handle(foodDelivered)
@@ -266,7 +265,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodDelivered = new FoodDelivered(order.id)
+        var foodDelivered = new FoodDelivered("any-delivery-id", order.id)
 
         when:
         facade.handle(foodDelivered)
@@ -287,7 +286,7 @@ class OrderingFacadeSpec extends Specification {
         }
 
         where:
-        status << [OrderStatus.CREATED, OrderStatus.COMPLETED, OrderStatus.CANCELLED]
+        status << [OrderStatus.CREATED, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     private void verifyEventHeader(Message event, String orderId, String eventType) {

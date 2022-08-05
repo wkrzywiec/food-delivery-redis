@@ -99,6 +99,14 @@ class Delivery {
         metadata.put("foodPickedUpTimestamp", foodPickedUpTimestamp.toString());
     }
 
+    public void deliverFood(Instant foodDeliveredTimestamp) {
+        if (status != FOOD_PICKED) {
+            throw new DeliveryException(format("Failed to set food as delivered for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
+        }
+        this.status = FOOD_DELIVERED;
+        metadata.put("foodDeliveredTimestamp", foodDeliveredTimestamp.toString());
+    }
+
     public void assignDeliveryMan(String deliveryManId) {
         if (this.deliveryManId != null) {
             throw new DeliveryException(format("Failed to assign delivery man to a '%s' delivery. There is already a delivery man assigned with an id %s", id, this.deliveryManId));

@@ -131,7 +131,16 @@ public class DeliveryFacade {
     }
 
     public void handle(DeliverFood deliverFood) {
+        log.info("Starting delivering food for '{}' delivery", deliverFood.deliveryId());
 
+        var delivery = findDelivery(deliverFood.deliveryId());
+
+        process(
+                delivery,
+                () -> delivery.deliverFood(clock.instant()),
+                new FoodDelivered(delivery.getId(), delivery.getOrderId()),
+                "Failed to set food as delivered."
+        );
     }
 
     private Delivery findDelivery(String deliveryId) {

@@ -2,6 +2,7 @@ package io.wkrzywiec.fooddelivery.domain.delivery
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.AssignDeliveryMan
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.DeliverFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.FoodReady
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PickUpFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
@@ -11,6 +12,7 @@ import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryCreated
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManUnAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodDelivered
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodWasPickedUp
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsReady
@@ -500,7 +502,7 @@ class DeliveryFacadeSpec extends Specification {
         and: "FoodIsPickedUp event is published on 'delivery' channel"
         with(publisher.messages.get("delivery").get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "FoodIsPickedUp")
+            verifyEventHeader(event, delivery.id, "FoodWasPickedUp")
 
             def body = deserializeJson(event.body(), FoodWasPickedUp)
             body.deliveryId() == delivery.id
@@ -535,6 +537,64 @@ class DeliveryFacadeSpec extends Specification {
 
         where:
         status << [DeliveryStatus.CREATED, DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
+    }
+
+    def "Food is delivered"() {
+        given:
+        var delivery = aDelivery()
+                .withStatus(DeliveryStatus.FOOD_PICKED)
+        repository.save(delivery.entity())
+
+        and:
+        var deliverFood = new DeliverFood(delivery.id)
+
+        when:
+        facade.handle(deliverFood)
+
+        then: "Delivery is set to food is delivered status"
+        with(repository.database.values()[0]) { deliveryEntity ->
+            deliveryEntity.status == DeliveryStatus.FOOD_DELIVERED
+            deliveryEntity.metadata.get("foodDeliveredTimestamp") == testTime.toString()
+        }
+
+        and: "FoodDelivered event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "FoodDelivered")
+
+            def body = deserializeJson(event.body(), FoodDelivered)
+            body.deliveryId() == delivery.id
+        }
+    }
+
+    def "Fail to set #status delivery to be in food is delivered state"() {
+        given:
+        var delivery = aDelivery().withStatus(status)
+        repository.save(delivery.entity())
+
+        and:
+        var deliverFood = new DeliverFood(delivery.id)
+
+        when:
+        facade.handle(deliverFood)
+
+        then: "Delivery is not in food picked up state"
+        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+            deliveryEntity.status == delivery.getStatus()
+        }
+
+        and: "DeliveryProcessingError event is published on 'delivery' channel"
+        with(publisher.messages.get("delivery").get(0)) {event ->
+
+            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+
+            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            body.id() == delivery.id
+            body.details() == "Failed to set food as delivered for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+        }
+
+        where:
+        status << [DeliveryStatus.CREATED, DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_DELIVERED]
     }
 
     private void verifyEventHeader(Message event, String deliveryId, String eventType) {

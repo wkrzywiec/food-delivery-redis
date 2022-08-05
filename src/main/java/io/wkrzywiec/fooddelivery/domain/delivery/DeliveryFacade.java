@@ -125,7 +125,7 @@ public class DeliveryFacade {
         process(
                 delivery,
                 () -> delivery.pickUpFood(clock.instant()),
-                new FoodIsPickedUp(delivery.getId()),
+                new FoodWasPickedUp(delivery.getId()),
                 "Failed to set food as picked up."
         );
     }

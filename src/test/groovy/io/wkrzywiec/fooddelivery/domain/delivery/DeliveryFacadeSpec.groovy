@@ -12,7 +12,7 @@ import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryManUnAssigned
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.DeliveryProcessingError
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsPickedUp
+import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodWasPickedUp
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsReady
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
@@ -502,7 +502,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.id, "FoodIsPickedUp")
 
-            def body = deserializeJson(event.body(), FoodIsPickedUp)
+            def body = deserializeJson(event.body(), FoodWasPickedUp)
             body.deliveryId() == delivery.id
         }
     }

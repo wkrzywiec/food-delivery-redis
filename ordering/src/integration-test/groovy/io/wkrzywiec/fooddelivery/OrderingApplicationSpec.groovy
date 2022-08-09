@@ -3,7 +3,7 @@ package io.wkrzywiec.fooddelivery
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 
-class FoodDeliveryDeliveryApplicationSpec extends IntegrationTest {
+class OrderingApplicationSpec extends IntegrationTest {
 
     @Autowired
     ApplicationContext context

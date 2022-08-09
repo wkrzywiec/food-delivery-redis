@@ -1,8 +1,8 @@
 spring:
   application:
-    name: 'food-delivery_delivery'
+    name: 'food-delivery_customer'
   jpa:
-    database-platform: io.wkrzywiec.fooddelivery.infra.repository.JsonbPostgreSQLDialect
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
 
 management:
   endpoints:
@@ -12,14 +12,14 @@ management:
 
 ---
 server:
-  port: 8082
+  port: 8083
 
 spring:
   profiles: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/delivery
-    username: delivery
-    password: delivery
+    url: jdbc:postgresql://localhost:5432/customer
+    username: customer
+    password: customer
   jpa:
     show-sql: true
     properties:

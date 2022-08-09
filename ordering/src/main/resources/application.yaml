@@ -1,6 +1,6 @@
 spring:
   application:
-    name: 'food-delivery-app'
+    name: 'food-delivery_ordering'
   jpa:
     database-platform: io.wkrzywiec.fooddelivery.infra.repository.JsonbPostgreSQLDialect
 

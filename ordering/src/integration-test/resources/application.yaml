@@ -6,7 +6,7 @@ management:
 
 spring:
   application:
-    name: 'food-delivery-app'
+    name: 'food-delivery_ordering'
   datasource:
     driver-class-name: io.wkrzywiec.fooddelivery.infra.repository.JsonbPostgreSQLDialect
   jpa:

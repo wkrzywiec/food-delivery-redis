@@ -1,0 +1,8 @@
+
+task startBootStack(type: GradleBuild) {
+    tasks = [
+            ':customer:bootRun',
+            ':ordering:bootRun',
+            ':delivery:bootRun'
+    ]
+}

@@ -1,6 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/001-add-customer-table.sql
-
-  - include:
-      file: db/changelog/002-add-order-table.sql

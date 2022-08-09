@@ -11,12 +11,15 @@ management:
         include: '*'
 
 ---
+server:
+  port: 8081
+
 spring:
   profiles: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/food_delivery
-    username: food_delivery
-    password: food_delivery
+    url: jdbc:postgresql://localhost:5432/ordering
+    username: ordering
+    password: ordering
   jpa:
     show-sql: true
     properties:

@@ -1,5 +1,6 @@
 rootProject.name = 'food-delivery'
 
+include 'commons'
 include 'ordering'
 include 'delivery'
 include 'customer'

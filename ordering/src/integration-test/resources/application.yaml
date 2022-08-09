@@ -1,0 +1,16 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+spring:
+  application:
+    name: 'food-delivery-app'
+  datasource:
+    driver-class-name: io.wkrzywiec.fooddelivery.infra.repository.JsonbPostgreSQLDialect
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

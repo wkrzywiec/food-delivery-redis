@@ -1,8 +1,6 @@
 package io.wkrzywiec.fooddelivery.customer
 
-import io.wkrzywiec.fooddelivery.customer.IntegrationTest
-import io.wkrzywiec.fooddelivery.customer.Customer
-import io.wkrzywiec.fooddelivery.customer.CustomerRepository
+import io.wkrzywiec.fooddelivery.commons.IntegrationTest
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Narrative
 import spock.lang.Subject

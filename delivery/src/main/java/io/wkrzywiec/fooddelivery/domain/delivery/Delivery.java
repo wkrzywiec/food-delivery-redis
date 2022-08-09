@@ -1,6 +1,6 @@
 package io.wkrzywiec.fooddelivery.domain.delivery;
 
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.OrderCreated;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;

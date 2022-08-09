@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.AssignDeliveryMan
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.DeliverFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.FoodReady
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.OrderCanceled
+import io.wkrzywiec.fooddelivery.domain.delivery.incoming.OrderCreated
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PickUpFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.PrepareFood
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.UnAssignDeliveryMan
@@ -16,8 +18,6 @@ import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodDelivered
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodWasPickedUp
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodIsReady
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.infra.messaging.FakeMessagePublisher
 import io.wkrzywiec.fooddelivery.infra.messaging.Message
 import spock.lang.Specification
@@ -58,7 +58,7 @@ class DeliveryFacadeSpec extends Specification {
         var orderCreated = new OrderCreated(
                 delivery.getOrderId(), delivery.getCustomerId(),
                 delivery.getRestaurantId(), delivery.getAddress(),
-                delivery.getItems().stream().map(i -> new io.wkrzywiec.fooddelivery.domain.ordering.incoming.Item(i.name, i.amount, i.pricePerItem)).toList(),
+                delivery.getItems().stream().map(i -> new io.wkrzywiec.fooddelivery.domain.delivery.incoming.Item(i.name, i.amount, i.pricePerItem)).toList(),
                 delivery.getDeliveryCharge(), delivery.getTotal())
 
         when:

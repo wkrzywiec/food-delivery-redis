@@ -1,10 +1,10 @@
 package io.wkrzywiec.fooddelivery.domain.ordering
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodDelivered
-import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.AddTip
 import io.wkrzywiec.fooddelivery.domain.ordering.incoming.CancelOrder
+import io.wkrzywiec.fooddelivery.domain.ordering.incoming.FoodDelivered
+import io.wkrzywiec.fooddelivery.domain.ordering.incoming.FoodInPreparation
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCompleted
 import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated

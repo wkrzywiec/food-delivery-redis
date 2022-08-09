@@ -5,8 +5,6 @@ import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.domain.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.domain.delivery.outgoing.*;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCanceled;
-import io.wkrzywiec.fooddelivery.domain.ordering.outgoing.OrderCreated;
 import io.wkrzywiec.fooddelivery.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.infra.messaging.MessagePublisher;

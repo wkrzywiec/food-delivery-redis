@@ -8,7 +8,7 @@ spring:
   application:
     name: 'food-delivery_ordering'
   datasource:
-    driver-class-name: io.wkrzywiec.fooddelivery.ordering.infra.repository.JsonbPostgreSQLDialect
+    driver-class-name: io.wkrzywiec.fooddelivery.commons.infra.repository.JsonbPostgreSQLDialect
   jpa:
     show-sql: true
     properties:

@@ -34,7 +34,7 @@ class Order {
     private BigDecimal deliveryCharge = new BigDecimal(0);
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
-    @Type(type = "io.wkrzywiec.fooddelivery.ordering.infra.repository.MapJsonbType")
+    @Type(type = "io.wkrzywiec.fooddelivery.commons.infra.repository.MapJsonbType")
     private Map<String, String> metadata = new HashMap<>();
 
     private Order() {}

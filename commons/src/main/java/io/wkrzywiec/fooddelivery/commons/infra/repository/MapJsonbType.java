@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.delivery.infra.repository;
+package io.wkrzywiec.fooddelivery.commons.infra.repository;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

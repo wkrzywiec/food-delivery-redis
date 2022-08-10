@@ -2,11 +2,11 @@ package io.wkrzywiec.fooddelivery.ordering;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vavr.control.Try;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import io.wkrzywiec.fooddelivery.ordering.incoming.*;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
-import io.wkrzywiec.fooddelivery.ordering.infra.messaging.Header;
-import io.wkrzywiec.fooddelivery.ordering.infra.messaging.Message;
-import io.wkrzywiec.fooddelivery.ordering.infra.messaging.MessagePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

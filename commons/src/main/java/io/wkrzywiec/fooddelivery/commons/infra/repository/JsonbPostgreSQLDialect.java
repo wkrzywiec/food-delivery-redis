@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.ordering.infra.repository;
+package io.wkrzywiec.fooddelivery.commons.infra.repository;
 
 import org.hibernate.dialect.PostgreSQL10Dialect;
 

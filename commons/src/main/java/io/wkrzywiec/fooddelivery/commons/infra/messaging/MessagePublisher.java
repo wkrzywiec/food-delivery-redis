@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.ordering.infra.messaging;
+package io.wkrzywiec.fooddelivery.commons.infra.messaging;
 
 import java.util.List;
 

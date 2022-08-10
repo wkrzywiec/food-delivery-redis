@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static io.wkrzywiec.fooddelivery.delivery.DeliveryStatus.*;
 import static java.lang.String.format;
 
 @Getter
@@ -32,7 +31,7 @@ class Delivery {
     private BigDecimal deliveryCharge = new BigDecimal(0);
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
-    @Type(type = "io.wkrzywiec.fooddelivery.delivery.infra.repository.MapJsonbType")
+    @Type(type = "io.wkrzywiec.fooddelivery.commons.infra.repository.MapJsonbType")
     private Map<String, String> metadata = new HashMap<>();
 
     private Delivery() {};
@@ -46,7 +45,7 @@ class Delivery {
         this.items = items;
         this.deliveryCharge = deliveryCharge;
         this.total = total;
-        this.status = CREATED;
+        this.status = DeliveryStatus.CREATED;
         this.metadata.put("creationTimestamp", creationTimestamp.toString());
     }
 
@@ -64,10 +63,10 @@ class Delivery {
     }
 
     public void cancel(String reason, Instant cancellationTimestamp) {
-        if (status != CREATED) {
+        if (status != DeliveryStatus.CREATED) {
             throw new DeliveryException(format("Failed to cancel a %s delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
-        this.status = CANCELED;
+        this.status = DeliveryStatus.CANCELED;
         metadata.put("cancellationTimestamp", cancellationTimestamp.toString());
 
         if (reason != null) {
@@ -76,34 +75,34 @@ class Delivery {
     }
 
     public void foodInPreparation(Instant foodPreparationTimestamp) {
-        if (status != CREATED) {
+        if (status != DeliveryStatus.CREATED) {
             throw new DeliveryException(format("Failed to start food preparation for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
-        this.status = FOOD_IN_PREPARATION;
+        this.status = DeliveryStatus.FOOD_IN_PREPARATION;
         metadata.put("foodPreparationTimestamp", foodPreparationTimestamp.toString());
     }
 
     public void foodReady(Instant foodReadyTimestamp) {
-        if (status != FOOD_IN_PREPARATION) {
+        if (status != DeliveryStatus.FOOD_IN_PREPARATION) {
             throw new DeliveryException(format("Failed to set food ready for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
-        this.status = FOOD_READY;
+        this.status = DeliveryStatus.FOOD_READY;
         metadata.put("foodReadyTimestamp", foodReadyTimestamp.toString());
     }
 
     public void pickUpFood(Instant foodPickedUpTimestamp) {
-        if (status != FOOD_READY) {
+        if (status != DeliveryStatus.FOOD_READY) {
             throw new DeliveryException(format("Failed to set food as picked up for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
-        this.status = FOOD_PICKED;
+        this.status = DeliveryStatus.FOOD_PICKED;
         metadata.put("foodPickedUpTimestamp", foodPickedUpTimestamp.toString());
     }
 
     public void deliverFood(Instant foodDeliveredTimestamp) {
-        if (status != FOOD_PICKED) {
+        if (status != DeliveryStatus.FOOD_PICKED) {
             throw new DeliveryException(format("Failed to set food as delivered for a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
-        this.status = FOOD_DELIVERED;
+        this.status = DeliveryStatus.FOOD_DELIVERED;
         metadata.put("foodDeliveredTimestamp", foodDeliveredTimestamp.toString());
     }
 
@@ -112,7 +111,7 @@ class Delivery {
             throw new DeliveryException(format("Failed to assign delivery man to a '%s' delivery. There is already a delivery man assigned with an id %s", id, this.deliveryManId));
         }
 
-        if (List.of(CANCELED, FOOD_PICKED, FOOD_DELIVERED).contains(status)) {
+        if (List.of(DeliveryStatus.CANCELED, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED).contains(status)) {
             throw new DeliveryException(format("Failed to assign a delivery man to a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
 
@@ -128,7 +127,7 @@ class Delivery {
             throw new DeliveryException(format("Failed to un assign delivery man from a '%s' delivery. Delivery has assigned '%s' person, but was asked to un assign '%s'", id, this.deliveryManId, deliveryManId));
         }
 
-        if (List.of(CANCELED, FOOD_PICKED, FOOD_DELIVERED).contains(status)) {
+        if (List.of(DeliveryStatus.CANCELED, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED).contains(status)) {
             throw new DeliveryException(format("Failed to un assign a delivery man from a '%s' delivery. It's not possible do it for a delivery with '%s' status", id, status));
         }
 

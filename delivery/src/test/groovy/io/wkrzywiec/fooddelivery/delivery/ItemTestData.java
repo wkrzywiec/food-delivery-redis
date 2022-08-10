@@ -1,5 +1,6 @@
 package io.wkrzywiec.fooddelivery.delivery;
 
+import io.wkrzywiec.fooddelivery.delivery.outgoing.Item;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -13,16 +14,16 @@ class ItemTestData {
 
     private ItemTestData() {};
 
-    Item entity() {
-        return Item.builder()
+    io.wkrzywiec.fooddelivery.delivery.Item entity() {
+        return io.wkrzywiec.fooddelivery.delivery.Item.builder()
                 .name(name)
                 .amount(amount)
                 .pricePerItem(pricePerItem)
                 .build();
     }
 
-    io.wkrzywiec.fooddelivery.delivery.outgoing.Item dto() {
-        return new io.wkrzywiec.fooddelivery.delivery.outgoing.Item(name, amount, pricePerItem);
+    Item dto() {
+        return new Item(name, amount, pricePerItem);
     }
 
     static ItemTestData anItem() {

@@ -1,6 +1,8 @@
 package io.wkrzywiec.fooddelivery.ordering
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.FakeMessagePublisher
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
 import io.wkrzywiec.fooddelivery.ordering.incoming.AddTip
 import io.wkrzywiec.fooddelivery.ordering.incoming.CancelOrder
 import io.wkrzywiec.fooddelivery.ordering.incoming.FoodDelivered
@@ -11,8 +13,6 @@ import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderInProgress
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderProcessingError
 import io.wkrzywiec.fooddelivery.ordering.outgoing.TipAddedToOrder
-import io.wkrzywiec.fooddelivery.ordering.infra.messaging.FakeMessagePublisher
-import io.wkrzywiec.fooddelivery.ordering.infra.messaging.Message
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title

@@ -3,11 +3,12 @@ package io.wkrzywiec.fooddelivery.delivery;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
+import io.wkrzywiec.fooddelivery.delivery.outgoing.Item;
 import io.wkrzywiec.fooddelivery.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.delivery.outgoing.*;
-import io.wkrzywiec.fooddelivery.delivery.infra.messaging.Header;
-import io.wkrzywiec.fooddelivery.delivery.infra.messaging.Message;
-import io.wkrzywiec.fooddelivery.delivery.infra.messaging.MessagePublisher;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +40,7 @@ public class DeliveryFacade {
                         savedDelivery.getCustomerId(),
                         savedDelivery.getRestaurantId(),
                         savedDelivery.getAddress(),
-                        savedDelivery.getItems().stream().map(i -> new io.wkrzywiec.fooddelivery.delivery.outgoing.Item(i.getName(), i.getAmount(), i.getPricePerItem())).toList(),
+                        savedDelivery.getItems().stream().map(i -> new Item(i.getName(), i.getAmount(), i.getPricePerItem())).toList(),
                         savedDelivery.getDeliveryCharge(),
                         savedDelivery.getTotal())
         );

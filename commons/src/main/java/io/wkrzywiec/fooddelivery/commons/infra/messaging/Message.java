@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.delivery.infra.messaging;
+package io.wkrzywiec.fooddelivery.commons.infra.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

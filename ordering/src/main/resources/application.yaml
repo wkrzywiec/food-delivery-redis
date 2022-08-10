@@ -2,7 +2,7 @@ spring:
   application:
     name: 'food-delivery_ordering'
   jpa:
-    database-platform: io.wkrzywiec.fooddelivery.infra.repository.JsonbPostgreSQLDialect
+    database-platform: io.wkrzywiec.fooddelivery.commons.infra.repository.JsonbPostgreSQLDialect
 
 management:
   endpoints:

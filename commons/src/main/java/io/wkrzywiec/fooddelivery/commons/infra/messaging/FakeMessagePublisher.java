@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class FakeMessagePublisher implements MessagePublisher {
 
-    ConcurrentHashMap<String, List<Message>> messages = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<String, List<Message>> messages = new ConcurrentHashMap<>();
 
     @Override
     public void send(Message message) {

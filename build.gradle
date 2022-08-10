@@ -1,3 +1,6 @@
+plugins {
+    id 'org.sonarqube' version '3.3'
+}
 
 task startBootStack(type: GradleBuild) {
     tasks = [
@@ -5,4 +8,25 @@ task startBootStack(type: GradleBuild) {
             ':ordering:bootRun',
             ':delivery:bootRun'
     ]
+}
+
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'Food delivery app'
+        property 'sonar.projectKey', 'wkrzywiec_food-delivery-app'
+        property 'sonar.organization', 'wkrzywiec'
+        property "sonar.host.url", "https://sonarcloud.io"
+    }
+}
+
+subprojects {
+    version = '1.0'
+    sonarqube {
+        properties {
+            property "sonar.sources", "src/main"
+            property "sonar.tests", "src/test"
+            property "sonar.coverage.jacoco.xmlReportPaths", "../build/reports/jacoco/codeCoverageReport/codeCoverageReport.xml"
+            property "sonar.host.url", "https://sonarcloud.io"
+        }
+    }
 }

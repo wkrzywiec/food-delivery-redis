@@ -6,7 +6,6 @@ plugins {
 	id 'java'
 	id 'groovy'
 	id 'jacoco'
-	id 'org.sonarqube' version '3.3'
 	id "org.barfuin.gradle.jacocolog" version "3.0.0-RC2"
 }
 
@@ -97,13 +96,5 @@ jacocoTestCoverageVerification {
 				minimum = 0.5
 			}
 		}
-	}
-}
-
-sonarqube {
-	properties {
-		property 'sonar.projectName', 'Food delivery app'
-		property 'sonar.projectKey', 'wkrzywiec_food-delivery-app'
-		property 'sonar.organization', 'wkrzywiec'
 	}
 }

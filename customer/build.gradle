@@ -43,6 +43,7 @@ dependencies {
     testImplementation 'org.spockframework:spock-spring:2.1-groovy-3.0'
     testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
     testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
+    testImplementation 'com.h2database:h2:2.1.214'
     testAnnotationProcessor 'org.projectlombok:lombok'
     integrationTestImplementation "org.testcontainers:spock:1.17.3"
     integrationTestImplementation "org.testcontainers:postgresql:1.17.3"

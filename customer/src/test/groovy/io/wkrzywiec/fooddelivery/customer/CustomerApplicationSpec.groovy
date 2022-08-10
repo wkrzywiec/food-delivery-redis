@@ -1,10 +1,12 @@
 package io.wkrzywiec.fooddelivery.customer
 
-import io.wkrzywiec.fooddelivery.commons.IntegrationTest
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
+import spock.lang.Specification
 
-class CustomerApplicationSpec extends IntegrationTest {
+@SpringBootTest
+class CustomerApplicationSpec extends Specification {
 
     @Autowired
     ApplicationContext context

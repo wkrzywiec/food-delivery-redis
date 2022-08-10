@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: 'food-delivery_delivery'
+  jpa:
+    database-platform: io.wkrzywiec.fooddelivery.commons.infra.repository.JsonbPostgreSQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+---
+server:
+  port: 8082
+
+spring:
+  profiles: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/delivery
+    username: delivery
+    password: delivery
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+spring:
+  profiles: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}

@@ -1,0 +1,38 @@
+plugins {
+    id 'idea'
+    id 'java'
+    id 'groovy'
+    id 'org.springframework.boot' version '2.7.1'
+}
+
+group = 'io.wkrzywiec'
+version = '0.0.1-SNAPSHOT'
+description = 'food-delivery common libraries'
+sourceCompatibility = '17'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    implementation 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.postgresql:postgresql:42.4.1'
+    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.1'
+
+    implementation 'org.springframework.boot:spring-boot-starter-test:2.7.1'
+    implementation 'org.spockframework:spock-core:2.1-groovy-3.0'
+    implementation 'org.spockframework:spock-spring:2.1-groovy-3.0'
+    implementation 'org.codehaus.groovy:groovy-all:3.0.11'
+    implementation 'io.rest-assured:spring-mock-mvc:4.4.0'
+    implementation "org.testcontainers:spock:1.17.3"
+    implementation "org.testcontainers:postgresql:1.17.3"
+}
+
+test {
+    useJUnitPlatform()
+}

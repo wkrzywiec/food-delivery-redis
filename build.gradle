@@ -1,108 +1,89 @@
 plugins {
-	id 'idea'
-	id 'org.springframework.boot' version '2.7.1'
-	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	id 'org.liquibase.gradle' version '2.1.1'
-	id 'java'
-	id 'groovy'
-	id 'jacoco'
-	id 'org.sonarqube' version '3.3'
-	id "org.barfuin.gradle.jacocolog" version "3.0.0-RC2"
+    id 'java'
+    id 'jacoco'
+    id 'org.sonarqube' version '3.3'
 }
 
-group = 'io.wkrzywiec'
-version = '0.0.1-SNAPSHOT'
-description = 'food-delivery'
-sourceCompatibility = '17'
+allprojects {
 
-def activeDevProfiles = 'dev'
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-
-	integrationTestImplementation.extendsFrom testImplementation
-	integrationTestRuntime.extendsFrom testRuntime
+    repositories {
+        mavenCentral()
+    }
 }
 
-repositories {
-	mavenCentral()
-}
-
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-	implementation 'org.postgresql:postgresql'
-	implementation 'org.liquibase:liquibase-core:4.11.0'
-	implementation 'io.vavr:vavr:0.10.4'
-	implementation 'org.apache.commons:commons-lang3:3.12.0'
-	implementation 'com.google.code.gson:gson:2.9.0'
-	implementation 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
-	testImplementation 'org.spockframework:spock-spring:2.1-groovy-3.0'
-	testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
-	testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
-	testAnnotationProcessor 'org.projectlombok:lombok'
-	integrationTestImplementation "org.testcontainers:spock:1.17.3"
-	integrationTestImplementation "org.testcontainers:postgresql:1.17.3"
-}
-
-bootRun {
-	args = ["--spring.profiles.active=" + activeDevProfiles]
-}
-
-test {
-	useJUnitPlatform()
-}
-
-sourceSets {
-	integrationTest {
-		groovy.srcDir "$projectDir/src/integration-test/groovy"
-		resources.srcDir "$projectDir/src/integration-test/resources"
-		compileClasspath += main.output + test.output
-		runtimeClasspath += main.output + test.output
-	}
-}
-
-task integrationTest(type: Test) {
-	testClassesDirs = sourceSets.integrationTest.output.classesDirs
-	classpath = sourceSets.integrationTest.runtimeClasspath
-
-	useJUnitPlatform()
-}
-
-check.dependsOn integrationTest
-
-jacocoTestReport {
-	reports {
-		xml.required = true
-	}
-	dependsOn = [
-	        'test',
-			'integrationTest'
-	]
-}
-
-jacocoTestCoverageVerification {
-	violationRules {
-		rule {
-			limit {
-				minimum = 0.5
-			}
-		}
-	}
+task startBootStack(type: GradleBuild) {
+    tasks = [
+            ':customer:bootRun',
+            ':ordering:bootRun',
+            ':delivery:bootRun'
+    ]
 }
 
 sonarqube {
-	properties {
-		property 'sonar.projectName', 'Food delivery app'
-		property 'sonar.projectKey', 'wkrzywiec_food-delivery-app'
-		property 'sonar.organization', 'wkrzywiec'
-	}
+    properties {
+        property 'sonar.projectName', 'Food delivery app'
+        property 'sonar.projectKey', 'wkrzywiec_food-delivery-app'
+        property 'sonar.organization', 'wkrzywiec'
+        property "sonar.host.url", "https://sonarcloud.io"
+    }
+}
+
+subprojects {
+    sonarqube {
+        properties {
+            property "sonar.sources", "src/main"
+            property "sonar.tests", "src/test"
+            property 'sonar.coverage.jacoco.xmlReportPaths', "$projectDir.parentFile.path/build/reports/jacoco/codeCoverageReport/codeCoverageReport.xml"
+            property "sonar.host.url", "https://sonarcloud.io"
+        }
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}
+
+// See here for more info: https://docs.gradle.org/6.4-rc-1/samples/sample_jvm_multi_project_with_code_coverage.html
+// Source: https://github.com/SonarSource/sonar-scanning-examples/blob/master/sonarqube-scanner-gradle/gradle-multimodule-coverage/build.gradle
+//
+// tag::coverageTask[]
+// task to gather code coverage from multiple subprojects
+// NOTE: the `JacocoReport` tasks do *not* depend on the `test` task by default. Meaning you have to ensure
+// that `test` (or other tasks generating code coverage) run before generating the report.
+// You can achieve this by calling the `test` lifecycle task manually
+// $ ./gradlew test codeCoverageReport
+tasks.register("codeCoverageReport", JacocoReport) {
+    // If a subproject applies the 'jacoco' plugin, add the result it to the report
+    subprojects { subproject ->
+        subproject.plugins.withType(JacocoPlugin).configureEach {
+            subproject.tasks.matching({ t -> t.extensions.findByType(JacocoTaskExtension) }).configureEach { testTask ->
+                //the jacoco extension may be disabled for some projects
+                if (testTask.extensions.getByType(JacocoTaskExtension).isEnabled()) {
+                    sourceSets subproject.sourceSets.main
+                    executionData(testTask)
+                }else{
+                    logger.warn('Jacoco extension is disabled for test task \'{}\' in project \'{}\'. this test task will be excluded from jacoco report.',testTask.getName(),subproject.getName())
+                }
+            }
+
+            // To automatically run `test` every time `./gradlew codeCoverageReport` is called,
+            // you may want to set up a task dependency between them as shown below.
+            // Note that this requires the `test` tasks to be resolved eagerly (see `forEach`) which
+            // may have a negative effect on the configuration time of your build.
+            subproject.tasks.matching({ t -> t.extensions.findByType(JacocoTaskExtension) }).forEach {
+                rootProject.tasks.codeCoverageReport.dependsOn(it)
+            }
+        }
+    }
+
+    // enable the different report types (html, xml, csv)
+    reports {
+        // xml is usually used to integrate code coverage with
+        // other tools like SonarQube, Coveralls or Codecov
+        xml.enabled true
+
+        // HTML reports can be used to see code coverage
+        // without any external tools
+        html.enabled true
+    }
 }

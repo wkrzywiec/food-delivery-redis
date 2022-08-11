@@ -26,6 +26,15 @@ configurations {
 }
 
 dependencies {
+
+	def lombokVersion = '1.18.24'
+	def spockVersion = '2.1-groovy-3.0'
+	def testcontainersVersion = '1.17.3'
+
+	implementation "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
 	implementation project(':commons')
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -36,17 +45,15 @@ dependencies {
 	implementation 'io.vavr:vavr:0.10.4'
 	implementation 'org.apache.commons:commons-lang3:3.12.0'
 	implementation 'com.google.code.gson:gson:2.9.0'
-	implementation 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
-	testImplementation 'org.spockframework:spock-spring:2.1-groovy-3.0'
+	implementation "org.spockframework:spock-core:${spockVersion}"
+	implementation "org.spockframework:spock-spring:${spockVersion}"
 	testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
 	testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
-	testAnnotationProcessor 'org.projectlombok:lombok'
-	integrationTestImplementation "org.testcontainers:spock:1.17.3"
-	integrationTestImplementation "org.testcontainers:postgresql:1.17.3"
+
+	integrationTestImplementation "org.testcontainers:spock:${testcontainersVersion}"
+	integrationTestImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
 }
 
 bootRun {

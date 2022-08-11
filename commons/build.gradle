@@ -1,8 +1,12 @@
 plugins {
     id 'idea'
+    id 'org.springframework.boot' version '2.7.1'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'org.liquibase.gradle' version '2.1.1'
     id 'java'
     id 'groovy'
-    id 'org.springframework.boot' version '2.7.1'
+    id 'jacoco'
+    id "org.barfuin.gradle.jacocolog" version "3.0.0-RC2"
 }
 
 group = 'io.wkrzywiec'
@@ -14,25 +18,72 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
-    implementation 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    def springBootVersion = '2.7.1'
+    def lombokVersion = '1.18.24'
+    def spockVersion = '2.1-groovy-3.0'
+    def testcontainersVersion = '1.17.3'
+
+    implementation "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     implementation 'org.postgresql:postgresql:42.4.1'
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.1'
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
 
-    implementation 'org.springframework.boot:spring-boot-starter-test:2.7.1'
-    implementation 'org.spockframework:spock-core:2.1-groovy-3.0'
-    implementation 'org.spockframework:spock-spring:2.1-groovy-3.0'
+    implementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    implementation "org.spockframework:spock-core:${spockVersion}"
+    implementation "org.spockframework:spock-spring:${spockVersion}"
     implementation 'org.codehaus.groovy:groovy-all:3.0.11'
     implementation 'io.rest-assured:spring-mock-mvc:4.4.0'
-    implementation "org.testcontainers:spock:1.17.3"
-    implementation "org.testcontainers:postgresql:1.17.3"
+    implementation "org.testcontainers:spock:${testcontainersVersion}"
+    implementation "org.testcontainers:postgresql:${testcontainersVersion}"
 }
 
 test {
     useJUnitPlatform()
+}
+
+sourceSets {
+    integrationTest {
+        groovy.srcDir "$projectDir/src/integration-test/groovy"
+        resources.srcDir "$projectDir/src/integration-test/resources"
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+check.dependsOn integrationTest
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+    }
+    dependsOn = [
+            'test',
+            'integrationTest'
+    ]
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.0
+            }
+        }
+    }
 }

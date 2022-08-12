@@ -35,6 +35,8 @@ import static ItemTestData.anItem
 @Title("Specification for delivery process")
 class DeliveryFacadeSpec extends Specification {
 
+    private final String ORDERS_CHANNEL = "orders"
+
     DeliveryFacade facade
     InMemoryDeliveryRepository repository
     FakeMessagePublisher publisher
@@ -80,8 +82,8 @@ class DeliveryFacadeSpec extends Specification {
         }
 
 
-        and: "DeliveryCreated event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryCreated event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryCreated")
 
@@ -115,8 +117,8 @@ class DeliveryFacadeSpec extends Specification {
             cancelledDelivery.metadata.get("cancellationTimestamp") == testTime.toString()
         }
 
-        and: "DeliveryCancelled event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryCancelled event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryCanceled")
 
@@ -142,8 +144,8 @@ class DeliveryFacadeSpec extends Specification {
             cancelledOrder.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -173,8 +175,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodPreparationTimestamp") == testTime.toString()
         }
 
-        and: "FoodInPreparation event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodInPreparation event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "FoodInPreparation")
 
@@ -199,8 +201,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -230,8 +232,8 @@ class DeliveryFacadeSpec extends Specification {
             cancelledDelivery.deliveryManId == deliveryManId
         }
 
-        and: "DeliveryManAssigned event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryManAssigned event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryManAssigned")
 
@@ -260,8 +262,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.deliveryManId == null
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -293,8 +295,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.deliveryManId == oldDeliveryManId
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -321,8 +323,8 @@ class DeliveryFacadeSpec extends Specification {
             cancelledDelivery.deliveryManId == null
         }
 
-        and: "DeliveryManUnAssigned event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryManUnAssigned event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryManUnAssigned")
 
@@ -351,8 +353,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.deliveryManId == deliveryManId
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -384,8 +386,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.deliveryManId == otherDeliveryManId
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -408,8 +410,8 @@ class DeliveryFacadeSpec extends Specification {
         when:
         facade.handle(assignDeliveryMan)
 
-        then: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        then: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -437,8 +439,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodReadyTimestamp") == testTime.toString()
         }
 
-        and: "FoodIsRead event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodIsRead event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "FoodIsRead")
 
@@ -463,8 +465,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -495,8 +497,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodPickedUpTimestamp") == testTime.toString()
         }
 
-        and: "FoodIsPickedUp event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodIsPickedUp event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "FoodWasPickedUp")
 
@@ -521,8 +523,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -553,8 +555,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodDeliveredTimestamp") == testTime.toString()
         }
 
-        and: "FoodDelivered event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodDelivered event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "FoodDelivered")
 
@@ -579,8 +581,8 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
@@ -596,7 +598,7 @@ class DeliveryFacadeSpec extends Specification {
     private void verifyEventHeader(Message event, String orderId, String eventType) {
         def header = event.header()
         header.messageId() != null
-        header.channel() == "delivery"
+        header.channel() == ORDERS_CHANNEL
         header.type() == eventType
         header.itemId() == orderId
         header.createdAt() == testClock.instant()

@@ -19,7 +19,7 @@ import static java.lang.String.format;
 @Slf4j
 public class OrderingFacade {
 
-    private static final String ORDERING_CHANNEL =  "ordering";
+    private static final String ORDERS_CHANNEL =  "orders";
 
     private final OrderingRepository repository;
     private final MessagePublisher publisher;
@@ -117,6 +117,6 @@ public class OrderingFacade {
     }
 
     private Header eventHeader(String orderId, String type) {
-        return new Header(UUID.randomUUID().toString(), ORDERING_CHANNEL, type, orderId, clock.instant());
+        return new Header(UUID.randomUUID().toString(), ORDERS_CHANNEL, type, orderId, clock.instant());
     }
 }

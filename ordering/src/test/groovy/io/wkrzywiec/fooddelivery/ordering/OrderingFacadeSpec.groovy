@@ -27,6 +27,8 @@ import static OrderTestData.anOrder
 @Title("Specification for ordering process")
 class OrderingFacadeSpec extends Specification {
 
+    private final String ORDERS_CHANNEL = "orders"
+
     OrderingFacade facade
     InMemoryOrderingRepository repository
     FakeMessagePublisher publisher
@@ -65,9 +67,9 @@ class OrderingFacadeSpec extends Specification {
         }
 
 
-        and: "OrderCreated event is published on 'ordering' channel"
+        and: "OrderCreated event is published on 'orders' channel"
         String orderId = repository.database.values().find().id
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCreated")
 
@@ -100,8 +102,8 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.metadata.get("cancellationReason") == cancellationReason
         }
 
-        and: "OrderCancelled event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderCancelled event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCancelled")
 
@@ -127,8 +129,8 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == order.getStatus()
         }
 
-        and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
@@ -157,8 +159,8 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == OrderStatus.IN_PROGRESS
         }
 
-        and: "OrderInProgress event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderInProgress event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderInProgress")
 
@@ -183,8 +185,8 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == order.getStatus()
         }
 
-        and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
@@ -221,8 +223,8 @@ class OrderingFacadeSpec extends Specification {
             orderEntity.total.doubleValue() == total
         }
 
-        and: "TipAddedToOrder event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "TipAddedToOrder event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "TipAddedToOrder")
 
@@ -249,8 +251,8 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == OrderStatus.COMPLETED
         }
 
-        and: "OrderCompleted event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderCompleted event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCompleted")
 
@@ -275,8 +277,8 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == order.getStatus()
         }
 
-        and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
@@ -292,7 +294,7 @@ class OrderingFacadeSpec extends Specification {
     private void verifyEventHeader(Message event, String orderId, String eventType) {
         def header = event.header()
         header.messageId() != null
-        header.channel() == "ordering"
+        header.channel() == ORDERS_CHANNEL
         header.type() == eventType
         header.itemId() == orderId
         header.createdAt() == testClock.instant()

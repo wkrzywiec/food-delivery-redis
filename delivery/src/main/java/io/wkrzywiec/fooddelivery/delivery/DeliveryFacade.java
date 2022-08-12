@@ -21,7 +21,7 @@ import static java.lang.String.format;
 @Slf4j
 public class DeliveryFacade {
 
-    private static final String DELIVERY_CHANNEL = "delivery";
+    private static final String ORDERS_CHANNEL = "orders";
     private final DeliveryRepository repository;
     private final MessagePublisher publisher;
     private final Clock clock;
@@ -175,6 +175,6 @@ public class DeliveryFacade {
     }
 
     private Header eventHeader(String orderId, String type) {
-        return new Header(UUID.randomUUID().toString(), DELIVERY_CHANNEL, type, orderId, clock.instant());
+        return new Header(UUID.randomUUID().toString(), ORDERS_CHANNEL, type, orderId, clock.instant());
     }
 }

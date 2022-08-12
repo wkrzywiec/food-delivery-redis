@@ -9,6 +9,7 @@ import io.wkrzywiec.fooddelivery.ordering.incoming.*;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import static java.lang.String.format;
 
 @RequiredArgsConstructor
 @Slf4j
+@Component
 public class OrderingFacade {
 
     private static final String ORDERS_CHANNEL =  "orders";

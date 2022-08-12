@@ -27,15 +27,14 @@ public class DeliveryFacade {
     private final Clock clock;
 
     public void handle(OrderCreated orderCreated) {
-        log.info("Preparing a delivery for an '{}' order.", orderCreated.id());
+        log.info("Preparing a delivery for an '{}' order.", orderCreated.orderId());
 
         Delivery newDelivery = Delivery.from(orderCreated, clock.instant());
         var savedDelivery = repository.save(newDelivery);
 
         Message event = resultingEvent(
-                savedDelivery.getId(),
+                savedDelivery.getOrderId(),
                 new DeliveryCreated(
-                        savedDelivery.getId(),
                         savedDelivery.getOrderId(),
                         savedDelivery.getCustomerId(),
                         savedDelivery.getRestaurantId(),
@@ -46,111 +45,111 @@ public class DeliveryFacade {
         );
 
         publisher.send(event);
-        log.info("New delivery with an id: '{}' was created", savedDelivery.getId());
+        log.info("New delivery with an orderId: '{}' was created", savedDelivery.getOrderId());
     }
 
     public void handle(OrderCanceled orderCanceled) {
-        log.info("'{}' order was canceled. Canceling delivery", orderCanceled.id());
+        log.info("'{}' order was canceled. Canceling delivery", orderCanceled.orderId());
 
-        var delivery = repository.findByOrderId(orderCanceled.id())
-                .orElseThrow(() -> new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.id())));
+        var delivery = repository.findByOrderId(orderCanceled.orderId())
+                .orElseThrow(() -> new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.orderId())));
 
         process(
                 delivery,
                 () -> delivery.cancel(orderCanceled.reason(), clock.instant()),
-                new DeliveryCanceled(delivery.getId(), orderCanceled.id(), orderCanceled.reason()),
+                new DeliveryCanceled(orderCanceled.orderId(), orderCanceled.reason()),
                 "Failed to cancel an delivery."
         );
     }
 
     public void handle(PrepareFood prepareFood) {
-        log.info("Starting food preparation for '{}' delivery", prepareFood.deliveryId());
+        log.info("Starting food preparation for '{}' delivery", prepareFood.orderId());
 
-        var delivery = findDelivery(prepareFood.deliveryId());
+        var delivery = findDelivery(prepareFood.orderId());
 
         process(
                 delivery,
                 () -> delivery.foodInPreparation(clock.instant()),
-                new FoodInPreparation(delivery.getId(), delivery.getOrderId()),
+                new FoodInPreparation(delivery.getOrderId()),
                 "Failed to start food preparation."
         );
     }
 
     public void handle(AssignDeliveryMan assignDeliveryMan) {
-        log.info("Assigning a delivery man with id: '{}' to a '{}' delivery", assignDeliveryMan.deliveryManId(), assignDeliveryMan.deliveryId());
+        log.info("Assigning a delivery man with id: '{}' to an '{}' order", assignDeliveryMan.deliveryManId(), assignDeliveryMan.orderId());
 
-        var delivery = findDelivery(assignDeliveryMan.deliveryId());
+        var delivery = findDelivery(assignDeliveryMan.orderId());
 
         process(
                 delivery,
                 () -> delivery.assignDeliveryMan(assignDeliveryMan.deliveryManId()),
-                new DeliveryManAssigned(delivery.getId(), assignDeliveryMan.deliveryManId()),
+                new DeliveryManAssigned(delivery.getOrderId(), assignDeliveryMan.deliveryManId()),
                 "Failed to assign delivery man."
         );
     }
 
     public void handle(UnAssignDeliveryMan unAssignDeliveryMan) {
-        log.info("Un assigning a delivery man with id: '{}' from a '{}' delivery", unAssignDeliveryMan.deliveryManId(), unAssignDeliveryMan.deliveryId());
+        log.info("Un assigning a delivery man with orderId: '{}' from a '{}' delivery", unAssignDeliveryMan.deliveryManId(), unAssignDeliveryMan.orderId());
 
-        var delivery = findDelivery(unAssignDeliveryMan.deliveryId());
+        var delivery = findDelivery(unAssignDeliveryMan.orderId());
 
         process(
                 delivery,
                 () -> delivery.unAssignDeliveryMan(unAssignDeliveryMan.deliveryManId()),
-                new DeliveryManUnAssigned(delivery.getId(), delivery.getDeliveryManId()),
+                new DeliveryManUnAssigned(delivery.getOrderId(), delivery.getDeliveryManId()),
                 "Failed to un assign delivery man."
         );
     }
 
 
     public void handle(FoodReady foodReady) {
-        log.info("Starting food ready for '{}' delivery", foodReady.deliveryId());
+        log.info("Starting food ready for '{}' delivery", foodReady.orderId());
 
-        var delivery = findDelivery(foodReady.deliveryId());
+        var delivery = findDelivery(foodReady.orderId());
 
         process(
                 delivery,
                 () -> delivery.foodReady(clock.instant()),
-                new FoodIsReady(delivery.getId()),
+                new FoodIsReady(delivery.getOrderId()),
                 "Failed to set food as ready."
         );
     }
 
     public void handle(PickUpFood pickUpFood) {
-        log.info("Starting picking up food for '{}' delivery", pickUpFood.deliveryId());
+        log.info("Starting picking up food for '{}' delivery", pickUpFood.orderId());
 
-        var delivery = findDelivery(pickUpFood.deliveryId());
+        var delivery = findDelivery(pickUpFood.orderId());
 
         process(
                 delivery,
                 () -> delivery.pickUpFood(clock.instant()),
-                new FoodWasPickedUp(delivery.getId()),
+                new FoodWasPickedUp(delivery.getOrderId()),
                 "Failed to set food as picked up."
         );
     }
 
     public void handle(DeliverFood deliverFood) {
-        log.info("Starting delivering food for '{}' delivery", deliverFood.deliveryId());
+        log.info("Starting delivering food for '{}' delivery", deliverFood.orderId());
 
-        var delivery = findDelivery(deliverFood.deliveryId());
+        var delivery = findDelivery(deliverFood.orderId());
 
         process(
                 delivery,
                 () -> delivery.deliverFood(clock.instant()),
-                new FoodDelivered(delivery.getId(), delivery.getOrderId()),
+                new FoodDelivered(delivery.getOrderId()),
                 "Failed to set food as delivered."
         );
     }
 
-    private Delivery findDelivery(String deliveryId) {
-        return repository.findById(deliveryId)
-                .orElseThrow(() -> new DeliveryException(format("There is no delivery with an id '%s'.", deliveryId)));
+    private Delivery findDelivery(String orderId) {
+        return repository.findByOrderId(orderId)
+                .orElseThrow(() -> new DeliveryException(format("There is no delivery with an orderId '%s'.", orderId)));
     }
 
     private void process(Delivery delivery, CheckedRunnable runProcess, Object successEvent, String failureMessage) {
         Try.run(runProcess)
-                .onSuccess(v -> publishSuccessEvent(delivery.getId(), successEvent))
-                .onFailure(ex -> publishingFailureEvent(delivery.getId(), failureMessage, ex));
+                .onSuccess(v -> publishSuccessEvent(delivery.getOrderId(), successEvent))
+                .onFailure(ex -> publishingFailureEvent(delivery.getOrderId(), failureMessage, ex));
     };
 
     private void publishSuccessEvent(String orderId, Object eventObject) {
@@ -165,10 +164,10 @@ public class DeliveryFacade {
         publisher.send(event);
     }
 
-    private Message resultingEvent(String deliveryId, Object eventBody) {
+    private Message resultingEvent(String orderId, Object eventBody) {
         Message event = null;
         try {
-            event = Message.from(eventHeader(deliveryId, eventBody.getClass().getSimpleName()), eventBody);
+            event = Message.from(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
         } catch (JsonProcessingException e) {
             throw new DeliveryException("Failed to map a Java event to JSON", e);
         }

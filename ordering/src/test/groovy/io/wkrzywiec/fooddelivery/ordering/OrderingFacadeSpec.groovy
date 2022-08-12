@@ -147,7 +147,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodInPreparation = new FoodInPreparation("any-delivery-id", order.id)
+        var foodInPreparation = new FoodInPreparation(order.id)
 
         when:
         facade.handle(foodInPreparation)
@@ -173,7 +173,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodInPreparation = new FoodInPreparation("any-delivery-id", order.id)
+        var foodInPreparation = new FoodInPreparation(order.id)
 
         when:
         facade.handle(foodInPreparation)
@@ -239,7 +239,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodDelivered = new FoodDelivered("any-delivery-id", order.id)
+        var foodDelivered = new FoodDelivered(order.id)
 
         when:
         facade.handle(foodDelivered)
@@ -265,7 +265,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodDelivered = new FoodDelivered("any-delivery-id", order.id)
+        var foodDelivered = new FoodDelivered(order.id)
 
         when:
         facade.handle(foodDelivered)

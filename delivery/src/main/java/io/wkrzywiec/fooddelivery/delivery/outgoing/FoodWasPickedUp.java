@@ -1,4 +1,4 @@
 package io.wkrzywiec.fooddelivery.delivery.outgoing;
 
-public record FoodWasPickedUp(String deliveryId) {
+public record FoodWasPickedUp(String orderId) {
 }

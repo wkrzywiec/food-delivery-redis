@@ -9,7 +9,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.isNull;
-import static java.util.Optional.ofNullable;
 
 class InMemoryDeliveryRepository implements DeliveryRepository {
 
@@ -17,24 +16,19 @@ class InMemoryDeliveryRepository implements DeliveryRepository {
 
     @Override
     public Delivery save(Delivery newDelivery) {
-        var id = newDelivery.getId();
+        var id = newDelivery.getOrderId();
         if (isNull(id)) {
             id = UUID.randomUUID().toString();
 
             try {
                 FieldUtils.writeField(newDelivery, "id", id, true);
             } catch (IllegalAccessException e) {
-                throw new RuntimeException("Class 'Order' does not have 'id' field");
+                throw new RuntimeException("Class 'Order' does not have 'orderId' field");
             }
         }
         database.put(id, newDelivery);
         return newDelivery;
     }
-
-     @Override
-     public Optional<Delivery> findById(String id) {
-         return ofNullable(database.get(id));
-     }
 
      @Override
      public Optional<Delivery> findByOrderId(String orderId) {

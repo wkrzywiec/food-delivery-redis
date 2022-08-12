@@ -1,4 +1,4 @@
 package io.wkrzywiec.fooddelivery.delivery.incoming;
 
-public record OrderCanceled(String id, String reason) {
+public record OrderCanceled(String orderId, String reason) {
 }

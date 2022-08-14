@@ -1,6 +1,8 @@
 package io.wkrzywiec.fooddelivery.commons.infra.messaging;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
@@ -12,13 +14,23 @@ import org.springframework.data.redis.core.RedisTemplate;
 @RequiredArgsConstructor
 public class RedisMessagePublisher implements MessagePublisher {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper mapper;
     @Override
     public void send(Message message) {
         log.info("Publishing '{}' message on channel: '{}', body: '{}'", message.header().type(), message.header().channel(), message.body());
 
-        ObjectRecord<String, Message> record = StreamRecords.newRecord()
-                .ofObject(message)
+        String messageJson = null;
+        try {
+            messageJson = mapper.writeValueAsString(message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        log.info(messageJson);
+
+        ObjectRecord<String, String> record = StreamRecords.newRecord()
+                .ofObject(messageJson)
                 .withStreamKey(message.header().channel());
 
         RecordId recordId = redisTemplate.opsForStream()

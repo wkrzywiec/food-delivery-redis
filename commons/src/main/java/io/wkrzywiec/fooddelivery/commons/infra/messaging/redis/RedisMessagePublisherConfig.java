@@ -1,9 +1,10 @@
-package io.wkrzywiec.fooddelivery.commons.infra.messaging;
+package io.wkrzywiec.fooddelivery.commons.infra.messaging.redis;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,7 +15,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Configuration
 @Profile("redis")
-public class RedisMessagingConfig {
+public class RedisMessagePublisherConfig {
 
     @Bean
     public MessagePublisher messagePublisher(RedisTemplate<String, String> redisTemplate) {

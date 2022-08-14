@@ -1,8 +1,10 @@
-package io.wkrzywiec.fooddelivery.commons.infra.messaging;
+package io.wkrzywiec.fooddelivery.commons.infra.messaging.redis;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.ObjectRecord;

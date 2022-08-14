@@ -33,7 +33,6 @@ public class RedisMessagingConfig {
 
     @Bean
     public RedisTemplate<String, ?> createRedisTemplateForEntity(RedisConnectionFactory connectionFactory) {
-        System.out.println(connectionFactory.getClass().getSimpleName());
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
         redisTemplate.setConnectionFactory(connectionFactory);
         redisTemplate.setKeySerializer(new StringRedisSerializer());

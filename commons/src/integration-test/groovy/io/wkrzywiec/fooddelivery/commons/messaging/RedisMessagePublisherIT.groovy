@@ -15,6 +15,7 @@ class RedisMessagePublisherIT extends CommonsIntegrationTest {
     private final String testChannel = "testing-channel"
 
     private MessagePublisher messagePublisher
+    private RedisStreamTestClient redis
 
     def setup() {
         def config = new RedisMessagingConfig()
@@ -23,15 +24,20 @@ class RedisMessagePublisherIT extends CommonsIntegrationTest {
         connectionFactory.afterPropertiesSet()
         def redisTemplate = config.createRedisTemplateForEntity(connectionFactory)
         messagePublisher = config.messagePublisher(redisTemplate)
+
+        redis = new RedisStreamTestClient(redisTemplate)
+
+        System.out.println("Clearing '$testChannel' stream from old messages")
+        redisTemplate.opsForStream().trim(testChannel, 0)
     }
 
     def "Publish JSON message to Redis stream"() {
-
         given: "A message"
+        String itemId = UUID.randomUUID()
         Message message = resultingEvent(
-                "any-item-id",
+                itemId,
                 new MessageTestBody(
-                        "any-item-id",
+                        itemId,
                         Instant.now(),
                         BigDecimal.valueOf(2.22)
                 )
@@ -40,8 +46,12 @@ class RedisMessagePublisherIT extends CommonsIntegrationTest {
         when: "Publish message"
         messagePublisher.send(message)
 
-        then:
-        1 == 1
+        then: "Message was published on $testChannel redis stream"
+        def publishedMessage = redis.getLatestMessageFromStreamAsJson(testChannel)
+
+        publishedMessage.get("header").get("itemId").asText() == itemId
+        publishedMessage.get("header").get("type").asText() == "MessageTestBody"
+        publishedMessage.get("body").get("id").asText() == itemId
     }
 
     private Message resultingEvent(String itemId, Object eventBody) {

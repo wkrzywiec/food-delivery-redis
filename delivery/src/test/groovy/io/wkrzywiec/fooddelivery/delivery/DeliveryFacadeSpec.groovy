@@ -87,7 +87,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryCreated")
 
-            def body = deserializeJson(event.body(), DeliveryCreated)
+            def body = event.body() as DeliveryCreated
             body.orderId() == delivery.getOrderId()
             body.customerId() == delivery.getCustomerId()
             body.restaurantId() == delivery.getRestaurantId()
@@ -122,7 +122,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryCanceled")
 
-            def body = deserializeJson(event.body(), DeliveryCanceled)
+            def body = event.body() as DeliveryCanceled
             body.orderId() == delivery.orderId
             body.reason() == cancellationReason
         }
@@ -149,7 +149,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to cancel a $delivery.orderId delivery. It's not possible do it for a delivery with '$status' status"
         }
@@ -180,7 +180,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "FoodInPreparation")
 
-            def body = deserializeJson(event.body(), FoodInPreparation)
+            def body = event.body() as FoodInPreparation
             body.orderId() == delivery.orderId
         }
     }
@@ -206,7 +206,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to start food preparation for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
@@ -237,7 +237,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryManAssigned")
 
-            def body = deserializeJson(event.body(), DeliveryManAssigned)
+            def body = event.body() as DeliveryManAssigned
             body.orderId() == delivery.orderId
             body.deliveryManId() == deliveryManId
         }
@@ -267,7 +267,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to assign a delivery man to an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
@@ -300,7 +300,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to assign delivery man to an '$delivery.orderId' order. There is already a delivery man assigned with an orderId $oldDeliveryManId"
         }
@@ -328,7 +328,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryManUnAssigned")
 
-            def body = deserializeJson(event.body(), DeliveryManUnAssigned)
+            def body = event.body() as DeliveryManUnAssigned
             body.orderId() == delivery.orderId
             body.deliveryManId() == deliveryManId
         }
@@ -358,7 +358,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to un assign a delivery man from an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
@@ -391,7 +391,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to un assign delivery man from an '$delivery.orderId' order. Delivery has assigned '$otherDeliveryManId' person, but was asked to un assign '$deliveryManId'"
         }
@@ -415,7 +415,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to un assign delivery man from an '$delivery.orderId' order. There is no delivery man assigned to this delivery"
         }
@@ -444,7 +444,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "FoodIsRead")
 
-            def body = deserializeJson(event.body(), FoodIsReady)
+            def body = event.body() as FoodIsReady
             body.orderId() == delivery.orderId
         }
     }
@@ -470,7 +470,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to set food ready for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
@@ -502,7 +502,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "FoodWasPickedUp")
 
-            def body = deserializeJson(event.body(), FoodWasPickedUp)
+            def body = event.body() as FoodWasPickedUp
             body.orderId() == delivery.orderId
         }
     }
@@ -528,7 +528,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to set food as picked up for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
@@ -560,7 +560,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "FoodDelivered")
 
-            def body = deserializeJson(event.body(), FoodDelivered)
+            def body = event.body() as FoodDelivered
             body.orderId() == delivery.orderId
         }
     }
@@ -586,7 +586,7 @@ class DeliveryFacadeSpec extends Specification {
 
             verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
+            def body = event.body() as DeliveryProcessingError
             body.orderId() == delivery.orderId
             body.details() == "Failed to set food as delivered for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
@@ -602,10 +602,5 @@ class DeliveryFacadeSpec extends Specification {
         header.type() == eventType
         header.itemId() == orderId
         header.createdAt() == testClock.instant()
-    }
-
-    private <T> T deserializeJson(String json, Class<T> objectType) {
-        ObjectMapper objectMapper = new ObjectMapper()
-        return objectMapper.readValue(json, objectType)
     }
 }

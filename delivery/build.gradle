@@ -14,7 +14,7 @@ version = '0.0.1-SNAPSHOT'
 description = 'food-delivery'
 sourceCompatibility = '17'
 
-def activeDevProfiles = 'dev'
+def activeDevProfiles = 'dev,redis'
 
 configurations {
 	compileOnly {

@@ -6,7 +6,10 @@ import org.springframework.context.annotation.Bean;
 
 import java.time.Clock;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+		"io.wkrzywiec.fooddelivery.delivery",
+		"io.wkrzywiec.fooddelivery.commons"
+})
 public class DeliveryApplication {
 
 	public static void main(String[] args) {

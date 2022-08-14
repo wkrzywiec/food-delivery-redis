@@ -21,27 +21,36 @@ import spock.lang.Specification
 @ContextConfiguration(initializers = IntegrationTestContainerInitializer)
 abstract class IntegrationTest extends Specification {
 
-    protected static final PostgreSQLContainer POSTGRES_DB
-    private static final String DB_NAME = "food_delivery"
-    private static final String DB_USERNAME = "food_delivery"
-    private static final String DB_PASSWORD = "food_delivery"
+    private static final PostgreSQLContainer POSTGRES_DB
+    protected static final String POSTGRES_URL
+    protected static final String DB_NAME = "food_delivery"
+    protected static final String DB_USERNAME = "food_delivery"
+    protected static final String DB_PASSWORD = "food_delivery"
 
     private static final GenericContainer REDIS
+    protected static final String REDIS_HOST
+    protected static final Integer REDIS_PORT
 
     static {
 
         if (useLocalInfrastructure()) {
-
+            POSTGRES_URL = "jdbc:postgresql://localhost:5432/food_delivery?loggerLevel=INFO"
+            REDIS_HOST = "localhost"
+            REDIS_PORT = 6379
+            return
         }
         POSTGRES_DB = new PostgreSQLContainer("postgres:14-alpine")
                 .withDatabaseName(DB_NAME)
                 .withUsername(DB_USERNAME)
                 .withPassword(DB_PASSWORD)
         POSTGRES_DB.start()
+        POSTGRES_URL = POSTGRES_DB.getJdbcUrl()
 
         REDIS = new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
                 .withExposedPorts(6379)
         REDIS.start()
+        REDIS_HOST = REDIS.getHost()
+        REDIS_PORT = REDIS.getMappedPort(6379)
     }
 
 
@@ -66,11 +75,11 @@ abstract class IntegrationTest extends Specification {
         @Override
         void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertyValues values = TestPropertyValues.of(
-                    "spring.datasource.url=" + POSTGRES_DB.getJdbcUrl(),
+                    "spring.datasource.url=" + POSTGRES_URL,
                     "spring.datasource.username=" + DB_USERNAME,
                     "spring.datasource.password=" + DB_PASSWORD,
-                    "spring.redis.host=" + REDIS.getHost(),
-                    "spring.redis.port=" + REDIS.getMappedPort(6379)
+                    "spring.redis.host=" + REDIS_HOST,
+                    "spring.redis.port=" + REDIS_PORT
             )
 
             values.applyTo(applicationContext)

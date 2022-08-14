@@ -73,7 +73,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderCreated")
 
-            def body = deserializeJson(event.body(), OrderCreated)
+            def body = event.body() as OrderCreated
             body.id() == orderId
             body.customerId() == order.getCustomerId()
             body.restaurantId() == order.getRestaurantId()
@@ -107,7 +107,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderCancelled")
 
-            def body = deserializeJson(event.body(), OrderCanceled)
+            def body = event.body() as OrderCanceled
             body.id() == order.id
             body.reason() == cancellationReason
         }
@@ -134,7 +134,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
-            def body = deserializeJson(event.body(), OrderProcessingError)
+            def body = event.body() as OrderProcessingError
             body.id() == order.id
             body.details() == "Failed to cancel an $order.id order. It's not possible to cancel an order with '$status' status"
         }
@@ -164,7 +164,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderInProgress")
 
-            def body = deserializeJson(event.body(), OrderInProgress)
+            def body = event.body() as OrderInProgress
             body.id() == order.id
         }
     }
@@ -190,7 +190,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
-            def body = deserializeJson(event.body(), OrderProcessingError)
+            def body = event.body() as OrderProcessingError
             body.id() == order.id
             body.details() == "Failed to set an '$order.id' order to IN_PROGRESS. It's not allowed to do it for an order with '$status' status"
         }
@@ -228,7 +228,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "TipAddedToOrder")
 
-            def body = deserializeJson(event.body(), TipAddedToOrder)
+            def body = event.body() as TipAddedToOrder
             body.orderId() == order.id
             body.tip().doubleValue() == tip
             body.total().doubleValue() == total
@@ -256,7 +256,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderCompleted")
 
-            def body = deserializeJson(event.body(), OrderCompleted)
+            def body = event.body() as OrderCompleted
             body.orderId() == order.id
         }
     }
@@ -282,7 +282,7 @@ class OrderingFacadeSpec extends Specification {
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
-            def body = deserializeJson(event.body(), OrderProcessingError)
+            def body = event.body() as OrderProcessingError
             body.id() == order.id
             body.details() == "Failed to set an '$order.id' order to COMPLETED. It's not allowed to do it for an order with '$status' status"
         }
@@ -298,10 +298,5 @@ class OrderingFacadeSpec extends Specification {
         header.type() == eventType
         header.itemId() == orderId
         header.createdAt() == testClock.instant()
-    }
-
-    private <T> T deserializeJson(String json, Class<T> objectType) {
-        ObjectMapper objectMapper = new ObjectMapper()
-        return objectMapper.readValue(json, objectType)
     }
 }

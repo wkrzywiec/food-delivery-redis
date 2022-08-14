@@ -109,13 +109,7 @@ public class OrderingFacade {
     }
 
     private Message resultingEvent(String orderId, Object eventBody) {
-        Message event = null;
-        try {
-            event = Message.from(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
-        } catch (JsonProcessingException e) {
-            throw new OrderingException("Failed to map a Java event to JSON", e);
-        }
-        return event;
+        return new Message(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
     }
 
     private Header eventHeader(String orderId, String type) {

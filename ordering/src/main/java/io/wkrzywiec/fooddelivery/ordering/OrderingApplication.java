@@ -1,15 +1,15 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
-import io.wkrzywiec.fooddelivery.commons.infra.messaging.RedisConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 import java.time.Clock;
 
-@Import(RedisConfig.class)
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+		"io.wkrzywiec.fooddelivery.ordering",
+		"io.wkrzywiec.fooddelivery.commons"
+})
 public class OrderingApplication {
 
 	public static void main(String[] args) {

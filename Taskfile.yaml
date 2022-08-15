@@ -40,4 +40,5 @@ tasks:
     cmds:
       - task: infra-down
       - docker volume rm food-delivery-app_postgres-data
+      - docker volume rm food-delivery-app_redis-data
       - echo "Docker volumes cleaned."

@@ -14,7 +14,7 @@ version = '0.0.1-SNAPSHOT'
 description = 'food-delivery'
 sourceCompatibility = '17'
 
-def activeDevProfiles = 'dev'
+def activeDevProfiles = 'dev,redis'
 
 configurations {
 	compileOnly {
@@ -39,6 +39,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
 	implementation 'org.postgresql:postgresql'
 	implementation 'org.liquibase:liquibase-core:4.11.0'
@@ -49,11 +50,14 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation "org.spockframework:spock-core:${spockVersion}"
 	implementation "org.spockframework:spock-spring:${spockVersion}"
+	implementation ('com.github.javafaker:javafaker:1.0.2') { exclude module: 'snakeyaml' }
+	implementation group: 'org.yaml', name: 'snakeyaml', version: '1.30'
 	testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
 	testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
 
 	integrationTestImplementation "org.testcontainers:spock:${testcontainersVersion}"
 	integrationTestImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+	integrationTestImplementation 'org.awaitility:awaitility:4.2.0'
 }
 
 bootRun {
@@ -100,4 +104,8 @@ jacocoTestCoverageVerification {
 			}
 		}
 	}
+}
+
+repositories {
+	mavenCentral()
 }

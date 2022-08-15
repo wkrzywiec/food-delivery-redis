@@ -12,5 +12,26 @@ services:
       - POSTGRES_USER=food_delivery
       - POSTGRES_PASSWORD=food_delivery
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+
+  redis-insight:
+    image: redislabs/redisinsight:1.12.1
+    container_name: redis-insight
+    ports:
+      - 8181:8001
+    depends_on:
+      - redis
+    volumes:
+      - ./infra/redisinsight:/db
+
 volumes:
+  redis-data:
   postgres-data:

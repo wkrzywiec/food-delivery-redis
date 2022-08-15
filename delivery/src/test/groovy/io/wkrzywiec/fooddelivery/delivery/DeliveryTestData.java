@@ -11,10 +11,9 @@ import static java.lang.String.format;
 @Getter
  class DeliveryTestData {
 
-    private String id = UUID.randomUUID().toString();
     private String orderId = UUID.randomUUID().toString();
-    private String customerId = "default-customer-id";
-    private String restaurantId = "default-restaurant-id";
+    private String customerId = "default-customer-orderId";
+    private String restaurantId = "default-restaurant-orderId";
     private String deliveryManId = null;
     private DeliveryStatus status = DeliveryStatus.CREATED;
     private String address = "Pizza street, Naples, Italy";
@@ -26,14 +25,13 @@ import static java.lang.String.format;
 
     private DeliveryTestData() {};
 
-     static DeliveryTestData aDelivery() {
+     public static DeliveryTestData aDelivery() {
         return new DeliveryTestData();
     }
 
      Delivery entity() {
         Delivery delivery = createAnEmptyDelivery();
-        setValue(delivery, "id", id);
-         setValue(delivery, "orderId", orderId);
+        setValue(delivery, "orderId", orderId);
         setValue(delivery, "customerId", customerId);
         setValue(delivery, "restaurantId", restaurantId);
         setValue(delivery, "deliveryManId", deliveryManId);
@@ -46,11 +44,6 @@ import static java.lang.String.format;
         setValue(delivery, "metadata", metadata);
 
         return delivery;
-    }
-
-     DeliveryTestData withId(String id) {
-        this.id = id;
-        return this;
     }
 
     DeliveryTestData withOrderId(String orderId) {
@@ -78,12 +71,12 @@ import static java.lang.String.format;
         return this;
     }
 
-     DeliveryTestData withAddress(String address) {
+     public DeliveryTestData withAddress(String address) {
         this.address = address;
         return this;
     }
 
-     DeliveryTestData withItems(ItemTestData... items) {
+     public DeliveryTestData withItems(ItemTestData... items) {
         this.items = Arrays.asList(items);
         return this;
     }

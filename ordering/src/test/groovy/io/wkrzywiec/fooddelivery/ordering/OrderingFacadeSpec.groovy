@@ -27,6 +27,8 @@ import static OrderTestData.anOrder
 @Title("Specification for ordering process")
 class OrderingFacadeSpec extends Specification {
 
+    private final String ORDERS_CHANNEL = "orders"
+
     OrderingFacade facade
     InMemoryOrderingRepository repository
     FakeMessagePublisher publisher
@@ -65,13 +67,13 @@ class OrderingFacadeSpec extends Specification {
         }
 
 
-        and: "OrderCreated event is published on 'ordering' channel"
+        and: "OrderCreated event is published on 'orders' channel"
         String orderId = repository.database.values().find().id
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCreated")
 
-            def body = deserializeJson(event.body(), OrderCreated)
+            def body = event.body() as OrderCreated
             body.id() == orderId
             body.customerId() == order.getCustomerId()
             body.restaurantId() == order.getRestaurantId()
@@ -100,12 +102,12 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.metadata.get("cancellationReason") == cancellationReason
         }
 
-        and: "OrderCancelled event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderCancelled event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCancelled")
 
-            def body = deserializeJson(event.body(), OrderCanceled)
+            def body = event.body() as OrderCanceled
             body.id() == order.id
             body.reason() == cancellationReason
         }
@@ -127,12 +129,12 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == order.getStatus()
         }
 
-        and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
-            def body = deserializeJson(event.body(), OrderProcessingError)
+            def body = event.body() as OrderProcessingError
             body.id() == order.id
             body.details() == "Failed to cancel an $order.id order. It's not possible to cancel an order with '$status' status"
         }
@@ -147,7 +149,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodInPreparation = new FoodInPreparation("any-delivery-id", order.id)
+        var foodInPreparation = new FoodInPreparation(order.id)
 
         when:
         facade.handle(foodInPreparation)
@@ -157,12 +159,12 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == OrderStatus.IN_PROGRESS
         }
 
-        and: "OrderInProgress event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderInProgress event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderInProgress")
 
-            def body = deserializeJson(event.body(), OrderInProgress)
+            def body = event.body() as OrderInProgress
             body.id() == order.id
         }
     }
@@ -173,7 +175,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodInPreparation = new FoodInPreparation("any-delivery-id", order.id)
+        var foodInPreparation = new FoodInPreparation(order.id)
 
         when:
         facade.handle(foodInPreparation)
@@ -183,12 +185,12 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == order.getStatus()
         }
 
-        and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
-            def body = deserializeJson(event.body(), OrderProcessingError)
+            def body = event.body() as OrderProcessingError
             body.id() == order.id
             body.details() == "Failed to set an '$order.id' order to IN_PROGRESS. It's not allowed to do it for an order with '$status' status"
         }
@@ -221,12 +223,12 @@ class OrderingFacadeSpec extends Specification {
             orderEntity.total.doubleValue() == total
         }
 
-        and: "TipAddedToOrder event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "TipAddedToOrder event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "TipAddedToOrder")
 
-            def body = deserializeJson(event.body(), TipAddedToOrder)
+            def body = event.body() as TipAddedToOrder
             body.orderId() == order.id
             body.tip().doubleValue() == tip
             body.total().doubleValue() == total
@@ -239,7 +241,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodDelivered = new FoodDelivered("any-delivery-id", order.id)
+        var foodDelivered = new FoodDelivered(order.id)
 
         when:
         facade.handle(foodDelivered)
@@ -249,12 +251,12 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == OrderStatus.COMPLETED
         }
 
-        and: "OrderCompleted event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderCompleted event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCompleted")
 
-            def body = deserializeJson(event.body(), OrderCompleted)
+            def body = event.body() as OrderCompleted
             body.orderId() == order.id
         }
     }
@@ -265,7 +267,7 @@ class OrderingFacadeSpec extends Specification {
         repository.save(order.entity())
 
         and:
-        var foodDelivered = new FoodDelivered("any-delivery-id", order.id)
+        var foodDelivered = new FoodDelivered(order.id)
 
         when:
         facade.handle(foodDelivered)
@@ -275,12 +277,12 @@ class OrderingFacadeSpec extends Specification {
             cancelledOrder.status == order.getStatus()
         }
 
-        and: "OrderProcessingError event is published on 'ordering' channel"
-        with(publisher.messages.get("ordering").get(0)) {event ->
+        and: "OrderProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
-            def body = deserializeJson(event.body(), OrderProcessingError)
+            def body = event.body() as OrderProcessingError
             body.id() == order.id
             body.details() == "Failed to set an '$order.id' order to COMPLETED. It's not allowed to do it for an order with '$status' status"
         }
@@ -292,14 +294,9 @@ class OrderingFacadeSpec extends Specification {
     private void verifyEventHeader(Message event, String orderId, String eventType) {
         def header = event.header()
         header.messageId() != null
-        header.channel() == "ordering"
+        header.channel() == ORDERS_CHANNEL
         header.type() == eventType
         header.itemId() == orderId
         header.createdAt() == testClock.instant()
-    }
-
-    private <T> T deserializeJson(String json, Class<T> objectType) {
-        ObjectMapper objectMapper = new ObjectMapper()
-        return objectMapper.readValue(json, objectType)
     }
 }

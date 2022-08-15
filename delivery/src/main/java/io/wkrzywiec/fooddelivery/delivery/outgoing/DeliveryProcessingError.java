@@ -1,4 +1,4 @@
 package io.wkrzywiec.fooddelivery.delivery.outgoing;
 
-public record DeliveryProcessingError(String id, String message, String details) {
+public record DeliveryProcessingError(String orderId, String message, String details) {
 }

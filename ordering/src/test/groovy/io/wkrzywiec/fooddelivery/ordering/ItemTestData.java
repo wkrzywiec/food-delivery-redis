@@ -25,16 +25,16 @@ class ItemTestData {
         return new io.wkrzywiec.fooddelivery.ordering.incoming.Item(name, amount, pricePerItem);
     }
 
-    static ItemTestData anItem() {
+    public static ItemTestData anItem() {
         return new ItemTestData();
     }
 
-    ItemTestData withName(String name) {
+    public ItemTestData withName(String name) {
         this.name = name;
         return this;
     }
 
-    ItemTestData withPricePerItem(double price) {
+    public ItemTestData withPricePerItem(double price) {
         this.pricePerItem = new BigDecimal(price);
         return this;
     }

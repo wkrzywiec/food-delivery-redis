@@ -1,6 +1,5 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
@@ -9,6 +8,7 @@ import io.wkrzywiec.fooddelivery.ordering.incoming.*;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.util.UUID;
@@ -17,9 +17,10 @@ import static java.lang.String.format;
 
 @RequiredArgsConstructor
 @Slf4j
+@Component
 public class OrderingFacade {
 
-    private static final String ORDERING_CHANNEL =  "ordering";
+    private static final String ORDERS_CHANNEL =  "orders";
 
     private final OrderingRepository repository;
     private final MessagePublisher publisher;
@@ -107,16 +108,10 @@ public class OrderingFacade {
     }
 
     private Message resultingEvent(String orderId, Object eventBody) {
-        Message event = null;
-        try {
-            event = Message.from(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
-        } catch (JsonProcessingException e) {
-            throw new OrderingException("Failed to map a Java event to JSON", e);
-        }
-        return event;
+        return new Message(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
     }
 
     private Header eventHeader(String orderId, String type) {
-        return new Header(UUID.randomUUID().toString(), ORDERING_CHANNEL, type, orderId, clock.instant());
+        return new Header(UUID.randomUUID().toString(), ORDERS_CHANNEL, type, orderId, clock.instant());
     }
 }

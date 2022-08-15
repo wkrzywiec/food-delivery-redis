@@ -26,16 +26,16 @@ class ItemTestData {
         return new Item(name, amount, pricePerItem);
     }
 
-    static ItemTestData anItem() {
+    public static ItemTestData anItem() {
         return new ItemTestData();
     }
 
-    ItemTestData withName(String name) {
+    public ItemTestData withName(String name) {
         this.name = name;
         return this;
     }
 
-    ItemTestData withPricePerItem(double price) {
+    public ItemTestData withPricePerItem(double price) {
         this.pricePerItem = new BigDecimal(price);
         return this;
     }

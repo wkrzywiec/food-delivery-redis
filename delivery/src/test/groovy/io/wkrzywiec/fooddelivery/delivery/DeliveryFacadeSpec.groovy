@@ -35,6 +35,8 @@ import static ItemTestData.anItem
 @Title("Specification for delivery process")
 class DeliveryFacadeSpec extends Specification {
 
+    private final String ORDERS_CHANNEL = "orders"
+
     DeliveryFacade facade
     InMemoryDeliveryRepository repository
     FakeMessagePublisher publisher
@@ -67,7 +69,6 @@ class DeliveryFacadeSpec extends Specification {
 
         then: "Delivery is saved"
         with(repository.database.values().find() as Delivery) { savedDelivery ->
-            savedDelivery.id != null
             savedDelivery.orderId == delivery.getOrderId()
             savedDelivery.customerId == delivery.getCustomerId()
             savedDelivery.restaurantId == delivery.getRestaurantId()
@@ -81,14 +82,12 @@ class DeliveryFacadeSpec extends Specification {
         }
 
 
-        and: "DeliveryCreated event is published on 'delivery' channel"
-        String deliveryId = repository.database.values().find().id
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryCreated event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryCreated")
+            verifyEventHeader(event, delivery.orderId, "DeliveryCreated")
 
-            def body = deserializeJson(event.body(), DeliveryCreated)
-            body.id() == deliveryId
+            def body = event.body() as DeliveryCreated
             body.orderId() == delivery.getOrderId()
             body.customerId() == delivery.getCustomerId()
             body.restaurantId() == delivery.getRestaurantId()
@@ -118,13 +117,12 @@ class DeliveryFacadeSpec extends Specification {
             cancelledDelivery.metadata.get("cancellationTimestamp") == testTime.toString()
         }
 
-        and: "DeliveryCancelled event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryCancelled event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryCanceled")
+            verifyEventHeader(event, delivery.orderId, "DeliveryCanceled")
 
-            def body = deserializeJson(event.body(), DeliveryCanceled)
-            body.deliveryId() == delivery.id
+            def body = event.body() as DeliveryCanceled
             body.orderId() == delivery.orderId
             body.reason() == cancellationReason
         }
@@ -142,18 +140,18 @@ class DeliveryFacadeSpec extends Specification {
         facade.handle(cancelOrder)
 
         then: "Delivery is not canceled"
-        with(repository.findById(delivery.id).get()) { cancelledOrder ->
+        with(repository.findByOrderId(delivery.orderId).get()) { cancelledOrder ->
             cancelledOrder.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to cancel a $delivery.id delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to cancel a $delivery.orderId delivery. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -166,7 +164,7 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var prepareFood = new PrepareFood(delivery.id)
+        var prepareFood = new PrepareFood(delivery.orderId)
 
         when:
         facade.handle(prepareFood)
@@ -177,13 +175,12 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodPreparationTimestamp") == testTime.toString()
         }
 
-        and: "FoodInPreparation event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodInPreparation event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "FoodInPreparation")
+            verifyEventHeader(event, delivery.orderId, "FoodInPreparation")
 
-            def body = deserializeJson(event.body(), FoodInPreparation)
-            body.deliveryId() == delivery.id
+            def body = event.body() as FoodInPreparation
             body.orderId() == delivery.orderId
         }
     }
@@ -194,24 +191,24 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var prepareFood = new PrepareFood(delivery.id)
+        var prepareFood = new PrepareFood(delivery.orderId)
 
         when:
         facade.handle(prepareFood)
 
         then: "Delivery is not in food preparation state"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to start food preparation for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to start food preparation for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -224,8 +221,8 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var deliveryManId = "any-delivery-man-id"
-        var assignDeliveryMan = new AssignDeliveryMan(delivery.id, deliveryManId)
+        var deliveryManId = "any-delivery-man-orderId"
+        var assignDeliveryMan = new AssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
@@ -235,13 +232,13 @@ class DeliveryFacadeSpec extends Specification {
             cancelledDelivery.deliveryManId == deliveryManId
         }
 
-        and: "DeliveryManAssigned event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryManAssigned event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryManAssigned")
+            verifyEventHeader(event, delivery.orderId, "DeliveryManAssigned")
 
-            def body = deserializeJson(event.body(), DeliveryManAssigned)
-            body.deliveryId() == delivery.id
+            def body = event.body() as DeliveryManAssigned
+            body.orderId() == delivery.orderId
             body.deliveryManId() == deliveryManId
         }
     }
@@ -254,25 +251,25 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var deliveryManId = "any-delivery-man-id"
-        var assignDeliveryMan = new AssignDeliveryMan(delivery.id, deliveryManId)
+        var deliveryManId = "any-delivery-man-orderId"
+        var assignDeliveryMan = new AssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
 
         then: "Delivery man was not assigned"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.deliveryManId == null
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to assign a delivery man to a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to assign a delivery man to an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -287,36 +284,36 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        def deliveryManId = "any-delivery-man-id"
-        def assignDeliveryMan = new AssignDeliveryMan(delivery.id, deliveryManId)
+        def deliveryManId = "any-delivery-man-orderId"
+        def assignDeliveryMan = new AssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
 
         then: "Delivery man has not been changed"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.deliveryManId == oldDeliveryManId
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to assign delivery man to a '$delivery.id' delivery. There is already a delivery man assigned with an id $oldDeliveryManId"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to assign delivery man to an '$delivery.orderId' order. There is already a delivery man assigned with an orderId $oldDeliveryManId"
         }
     }
 
     def "Un assign delivery man from delivery"() {
         given:
-        var deliveryManId = "any-delivery-man-id"
+        var deliveryManId = "any-delivery-man-orderId"
         var delivery = aDelivery().withDeliveryManId(deliveryManId)
         repository.save(delivery.entity())
 
         and:
-        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
@@ -326,44 +323,44 @@ class DeliveryFacadeSpec extends Specification {
             cancelledDelivery.deliveryManId == null
         }
 
-        and: "DeliveryManUnAssigned event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryManUnAssigned event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryManUnAssigned")
+            verifyEventHeader(event, delivery.orderId, "DeliveryManUnAssigned")
 
-            def body = deserializeJson(event.body(), DeliveryManUnAssigned)
-            body.deliveryId() == delivery.id
+            def body = event.body() as DeliveryManUnAssigned
+            body.orderId() == delivery.orderId
             body.deliveryManId() == deliveryManId
         }
     }
 
     def "Fail to un assign delivery man from #status delivery"() {
         given:
-        var deliveryManId = "any-delivery-man-id"
+        var deliveryManId = "any-delivery-man-orderId"
         var delivery = aDelivery()
                 .withStatus(status)
                 .withDeliveryManId(deliveryManId)
         repository.save(delivery.entity())
 
         and:
-        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
 
         then: "Delivery man was not un assigned"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.deliveryManId == deliveryManId
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to un assign a delivery man from a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to un assign a delivery man from an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -378,25 +375,25 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        def deliveryManId = "any-delivery-man-id"
-        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+        def deliveryManId = "any-delivery-man-orderId"
+        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
 
         then: "Delivery man has not been changed"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.deliveryManId == otherDeliveryManId
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to un assign delivery man from a '$delivery.id' delivery. Delivery has assigned '$otherDeliveryManId' person, but was asked to un assign '$deliveryManId'"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to un assign delivery man from an '$delivery.orderId' order. Delivery has assigned '$otherDeliveryManId' person, but was asked to un assign '$deliveryManId'"
         }
     }
 
@@ -407,20 +404,20 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        def deliveryManId = "any-delivery-man-id"
-        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.id, deliveryManId)
+        def deliveryManId = "any-delivery-man-orderId"
+        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
 
         when:
         facade.handle(assignDeliveryMan)
 
-        then: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        then: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to un assign delivery man from a '$delivery.id' delivery. There is no delivery man assigned to this delivery"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to un assign delivery man from an '$delivery.orderId' order. There is no delivery man assigned to this delivery"
         }
     }
 
@@ -431,7 +428,7 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var foodReady = new FoodReady(delivery.id)
+        var foodReady = new FoodReady(delivery.orderId)
 
         when:
         facade.handle(foodReady)
@@ -442,13 +439,13 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodReadyTimestamp") == testTime.toString()
         }
 
-        and: "FoodIsRead event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodIsRead event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "FoodIsRead")
+            verifyEventHeader(event, delivery.orderId, "FoodIsRead")
 
-            def body = deserializeJson(event.body(), FoodIsReady)
-            body.deliveryId() == delivery.id
+            def body = event.body() as FoodIsReady
+            body.orderId() == delivery.orderId
         }
     }
 
@@ -458,24 +455,24 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var foodReady = new FoodReady(delivery.id)
+        var foodReady = new FoodReady(delivery.orderId)
 
         when:
         facade.handle(foodReady)
 
         then: "Delivery is not in food ready state"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to set food ready for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to set food ready for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -489,7 +486,7 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var pickUpFood = new PickUpFood(delivery.id)
+        var pickUpFood = new PickUpFood(delivery.orderId)
 
         when:
         facade.handle(pickUpFood)
@@ -500,13 +497,13 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodPickedUpTimestamp") == testTime.toString()
         }
 
-        and: "FoodIsPickedUp event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodIsPickedUp event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "FoodWasPickedUp")
+            verifyEventHeader(event, delivery.orderId, "FoodWasPickedUp")
 
-            def body = deserializeJson(event.body(), FoodWasPickedUp)
-            body.deliveryId() == delivery.id
+            def body = event.body() as FoodWasPickedUp
+            body.orderId() == delivery.orderId
         }
     }
 
@@ -516,24 +513,24 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var pickUpFood = new PickUpFood(delivery.id)
+        var pickUpFood = new PickUpFood(delivery.orderId)
 
         when:
         facade.handle(pickUpFood)
 
         then: "Delivery is not in food picked up state"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to set food as picked up for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to set food as picked up for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
@@ -547,7 +544,7 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var deliverFood = new DeliverFood(delivery.id)
+        var deliverFood = new DeliverFood(delivery.orderId)
 
         when:
         facade.handle(deliverFood)
@@ -558,13 +555,13 @@ class DeliveryFacadeSpec extends Specification {
             deliveryEntity.metadata.get("foodDeliveredTimestamp") == testTime.toString()
         }
 
-        and: "FoodDelivered event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "FoodDelivered event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "FoodDelivered")
+            verifyEventHeader(event, delivery.orderId, "FoodDelivered")
 
-            def body = deserializeJson(event.body(), FoodDelivered)
-            body.deliveryId() == delivery.id
+            def body = event.body() as FoodDelivered
+            body.orderId() == delivery.orderId
         }
     }
 
@@ -574,41 +571,36 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var deliverFood = new DeliverFood(delivery.id)
+        var deliverFood = new DeliverFood(delivery.orderId)
 
         when:
         facade.handle(deliverFood)
 
         then: "Delivery is not in food picked up state"
-        with(repository.findById(delivery.id).get()) { deliveryEntity ->
+        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
             deliveryEntity.status == delivery.getStatus()
         }
 
-        and: "DeliveryProcessingError event is published on 'delivery' channel"
-        with(publisher.messages.get("delivery").get(0)) {event ->
+        and: "DeliveryProcessingError event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
-            verifyEventHeader(event, delivery.id, "DeliveryProcessingError")
+            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
 
-            def body = deserializeJson(event.body(), DeliveryProcessingError)
-            body.id() == delivery.id
-            body.details() == "Failed to set food as delivered for a '$delivery.id' delivery. It's not possible do it for a delivery with '$status' status"
+            def body = event.body() as DeliveryProcessingError
+            body.orderId() == delivery.orderId
+            body.details() == "Failed to set food as delivered for an '$delivery.orderId' order. It's not possible do it for a delivery with '$status' status"
         }
 
         where:
         status << [DeliveryStatus.CREATED, DeliveryStatus.CANCELED, DeliveryStatus.FOOD_IN_PREPARATION, DeliveryStatus.FOOD_READY, DeliveryStatus.FOOD_DELIVERED]
     }
 
-    private void verifyEventHeader(Message event, String deliveryId, String eventType) {
+    private void verifyEventHeader(Message event, String orderId, String eventType) {
         def header = event.header()
         header.messageId() != null
-        header.channel() == "delivery"
+        header.channel() == ORDERS_CHANNEL
         header.type() == eventType
-        header.itemId() == deliveryId
+        header.itemId() == orderId
         header.createdAt() == testClock.instant()
-    }
-
-    private <T> T deserializeJson(String json, Class<T> objectType) {
-        ObjectMapper objectMapper = new ObjectMapper()
-        return objectMapper.readValue(json, objectType)
     }
 }

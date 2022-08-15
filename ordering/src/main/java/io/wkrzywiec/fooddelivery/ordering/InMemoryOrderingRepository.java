@@ -1,6 +1,7 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
@@ -10,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
-class InMemoryOrderingRepository implements OrderingRepository {
+@Component
+public class InMemoryOrderingRepository implements OrderingRepository {
 
     final Map<String, Order> database = new ConcurrentHashMap<>();
 

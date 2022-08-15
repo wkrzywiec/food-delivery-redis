@@ -1,0 +1,110 @@
+plugins {
+    id 'idea'
+    id 'org.springframework.boot' version '2.7.1'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'org.liquibase.gradle' version '2.1.1'
+    id 'java'
+    id 'groovy'
+    id 'jacoco'
+    id "org.barfuin.gradle.jacocolog" version "3.0.0-RC2"
+}
+
+group = 'io.wkrzywiec'
+version = '0.0.1-SNAPSHOT'
+description = 'food-delivery backend for frontend'
+sourceCompatibility = '17'
+
+def activeDevProfiles = 'dev,redis'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+
+    def lombokVersion = '1.18.24'
+    def spockVersion = '2.1-groovy-3.0'
+    def testcontainersVersion = '1.17.3'
+
+    implementation "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    implementation project(':commons')
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+//    implementation 'io.springfox:springfox-boot-starter:3.0.0'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
+    implementation 'com.h2database:h2:2.1.214'
+    implementation 'io.vavr:vavr:0.10.4'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'com.google.code.gson:gson:2.9.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation "org.spockframework:spock-core:${spockVersion}"
+    implementation "org.spockframework:spock-spring:${spockVersion}"
+    implementation ('com.github.javafaker:javafaker:1.0.2') { exclude module: 'snakeyaml' }
+    implementation group: 'org.yaml', name: 'snakeyaml', version: '1.30'
+    testImplementation 'org.codehaus.groovy:groovy-all:3.0.11'
+    testImplementation 'io.rest-assured:spring-mock-mvc:4.4.0'
+
+    integrationTestImplementation "org.testcontainers:spock:${testcontainersVersion}"
+    integrationTestImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+    integrationTestImplementation 'org.awaitility:awaitility:4.2.0'
+}
+
+bootRun {
+    args = ["--spring.profiles.active=" + activeDevProfiles]
+}
+
+test {
+    useJUnitPlatform()
+}
+
+sourceSets {
+    integrationTest {
+        groovy.srcDir "$projectDir/src/integration-test/groovy"
+        resources.srcDir "$projectDir/src/integration-test/resources"
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+check.dependsOn integrationTest
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+    }
+    dependsOn = [
+            'test',
+            'integrationTest'
+    ]
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.5
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}

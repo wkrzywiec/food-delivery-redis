@@ -13,6 +13,7 @@ allprojects {
 
 task startBootStack(type: GradleBuild) {
     tasks = [
+            ':bff:bootRun',
             ':customer:bootRun',
             ':ordering:bootRun',
             ':delivery:bootRun'

@@ -17,7 +17,7 @@ public class RedisOrdersStreamConsumerConfig extends RedisMessageConsumerConfig 
     @Bean
     public Subscription ordersChannelSubscription(RedisConnectionFactory factory,
                                                   RedisTemplate<String, String> redisTemplate,
-                                                  RedisOrdersChannelConsumers streamListener) {
+                                                  RedisOrdersChannelConsumer streamListener) {
         return createSubscription(redisTemplate, factory, streamListener);
     }
 }

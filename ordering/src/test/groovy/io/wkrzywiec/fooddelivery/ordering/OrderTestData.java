@@ -25,11 +25,11 @@ import static java.lang.String.format;
 
     private OrderTestData() {};
 
-     static OrderTestData anOrder() {
+     public static OrderTestData anOrder() {
         return new OrderTestData();
     }
 
-     Order entity() {
+     public Order entity() {
         Order order = createAnEmptyOrder();
         setValue(order, "id", id);
         setValue(order, "customerId", customerId);
@@ -45,51 +45,51 @@ import static java.lang.String.format;
         return order;
     }
 
-     CreateOrder createOrder() {
+     public CreateOrder createOrder() {
         return new CreateOrder(id, customerId, restaurantId, items.stream().map(ItemTestData::dto).toList(), address, deliveryCharge);
     }
 
-     OrderTestData withId(String id) {
+     public OrderTestData withId(String id) {
         this.id = id;
         return this;
     }
 
-     OrderTestData withCustomerId(String customerId) {
+     public OrderTestData withCustomerId(String customerId) {
         this.customerId = customerId;
         return this;
     }
 
-     OrderTestData withRestaurantId(String restaurantId) {
+     public OrderTestData withRestaurantId(String restaurantId) {
         this.restaurantId = restaurantId;
         return this;
     }
 
-     OrderTestData withStatus(OrderStatus status) {
+    public OrderTestData withStatus(OrderStatus status) {
         this.status = status;
         return this;
     }
 
-     OrderTestData withAddress(String address) {
+    public OrderTestData withAddress(String address) {
         this.address = address;
         return this;
     }
 
-     OrderTestData withItems(ItemTestData... items) {
+     public OrderTestData withItems(ItemTestData... items) {
         this.items = Arrays.asList(items);
         return this;
     }
 
-     OrderTestData withDeliveryCharge(double deliveryCharge) {
+    public OrderTestData withDeliveryCharge(double deliveryCharge) {
         this.deliveryCharge = new BigDecimal(deliveryCharge);
         return this;
     }
 
-     OrderTestData withTip(BigDecimal tip) {
+    public OrderTestData withTip(BigDecimal tip) {
         this.tip = tip;
         return this;
     }
 
-     OrderTestData withMetadata(Map<String, String> metadata) {
+    public OrderTestData withMetadata(Map<String, String> metadata) {
         this.metadata = metadata;
         return this;
     }

@@ -5,6 +5,7 @@ import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.redis.RedisMessagePublisherConfig
+import io.wkrzywiec.fooddelivery.commons.infra.RedisStreamTestClient
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 
@@ -22,7 +23,7 @@ class RedisMessagePublisherIT extends CommonsIntegrationTest {
         def redisStandaloneConfig = new RedisStandaloneConfiguration(REDIS_HOST, REDIS_PORT)
         def connectionFactory = new LettuceConnectionFactory(redisStandaloneConfig)
         connectionFactory.afterPropertiesSet()
-        def redisTemplate = config.createRedisTemplateForEntity(connectionFactory)
+        def redisTemplate = config.redisTemplate(connectionFactory)
         messagePublisher = config.messagePublisher(redisTemplate)
 
         redis = new RedisStreamTestClient(redisTemplate)
@@ -34,7 +35,7 @@ class RedisMessagePublisherIT extends CommonsIntegrationTest {
     def "Publish JSON message to Redis stream"() {
         given: "A message"
         String itemId = UUID.randomUUID()
-        Message message = resultingEvent(
+        Message message = event(
                 itemId,
                 new MessageTestBody(
                         itemId,
@@ -54,7 +55,7 @@ class RedisMessagePublisherIT extends CommonsIntegrationTest {
         publishedMessage.get("body").get("id").asText() == itemId
     }
 
-    private Message resultingEvent(String itemId, Object eventBody) {
+    private Message event(String itemId, Object eventBody) {
         return new Message(eventHeader(itemId, eventBody.getClass().getSimpleName()), eventBody)
     }
 

@@ -1,6 +1,5 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;

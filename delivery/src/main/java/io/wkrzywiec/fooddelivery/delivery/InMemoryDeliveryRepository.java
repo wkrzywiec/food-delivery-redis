@@ -1,6 +1,7 @@
 package io.wkrzywiec.fooddelivery.delivery;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.isNull;
 
+@Component
 class InMemoryDeliveryRepository implements DeliveryRepository {
 
     final Map<String, Delivery> database = new ConcurrentHashMap<>();

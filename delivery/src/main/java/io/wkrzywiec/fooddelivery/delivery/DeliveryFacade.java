@@ -11,6 +11,7 @@ import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import static java.lang.String.format;
 
 @RequiredArgsConstructor
 @Slf4j
+@Component
 public class DeliveryFacade {
 
     private static final String ORDERS_CHANNEL = "orders";

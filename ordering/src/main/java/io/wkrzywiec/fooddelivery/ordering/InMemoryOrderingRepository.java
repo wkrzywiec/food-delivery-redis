@@ -12,7 +12,7 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
 @Component
-class InMemoryOrderingRepository implements OrderingRepository {
+public class InMemoryOrderingRepository implements OrderingRepository {
 
     final Map<String, Order> database = new ConcurrentHashMap<>();
 

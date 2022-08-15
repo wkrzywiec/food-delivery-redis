@@ -25,7 +25,7 @@ import static java.lang.String.format;
 
     private DeliveryTestData() {};
 
-     static DeliveryTestData aDelivery() {
+     public static DeliveryTestData aDelivery() {
         return new DeliveryTestData();
     }
 
@@ -71,12 +71,12 @@ import static java.lang.String.format;
         return this;
     }
 
-     DeliveryTestData withAddress(String address) {
+     public DeliveryTestData withAddress(String address) {
         this.address = address;
         return this;
     }
 
-     DeliveryTestData withItems(ItemTestData... items) {
+     public DeliveryTestData withItems(ItemTestData... items) {
         this.items = Arrays.asList(items);
         return this;
     }

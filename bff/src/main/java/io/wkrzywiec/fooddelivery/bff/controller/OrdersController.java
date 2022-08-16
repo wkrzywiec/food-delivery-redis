@@ -1,6 +1,10 @@
 package io.wkrzywiec.fooddelivery.bff.controller;
 
-import io.wkrzywiec.fooddelivery.bff.inbox.Inbox;
+import io.wkrzywiec.fooddelivery.bff.inbox.InboxPublisher;
+import io.wkrzywiec.fooddelivery.bff.controller.model.AddTipDTO;
+import io.wkrzywiec.fooddelivery.bff.controller.model.CreateOrderDTO;
+import io.wkrzywiec.fooddelivery.bff.controller.model.ResponseDTO;
+import io.wkrzywiec.fooddelivery.bff.controller.model.CancelOrderDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +17,7 @@ import java.util.UUID;
 @RestController
 public class OrdersController {
 
-    private final Inbox inbox;
+    private final InboxPublisher inboxPublisher;
     private static final String ORDERING_INBOX = "ordering-inbox";
 
     @PostMapping("/orders/")
@@ -25,15 +29,16 @@ public class OrdersController {
             log.info("Generated {} id for a new order", id);
         }
 
-        inbox.storeMessage(ORDERING_INBOX, createOrder);
+        inboxPublisher.storeMessage(ORDERING_INBOX + ":create", createOrder);
 
         return ResponseEntity.accepted().body(new ResponseDTO(createOrder.getId()));
     }
 
-    @PatchMapping("/orders/{orderId}")
-    ResponseEntity<ResponseDTO> updateAnOrder(String orderId, @RequestBody UpdateOrderDTO updateOrder) {
+    @PatchMapping("/orders/{orderId}/status/cancel")
+    ResponseEntity<ResponseDTO> cancelAnOrder(String orderId, @RequestBody CancelOrderDTO updateOrder) {
         log.info("Received request to update an '{}' order, update: {}", orderId, updateOrder);
-        inbox.storeMessage(ORDERING_INBOX, updateOrder);
+        updateOrder.setOrderId(orderId);
+        inboxPublisher.storeMessage(ORDERING_INBOX + ":cancel", updateOrder);
 
         return ResponseEntity.accepted().body(new ResponseDTO(orderId));
     }
@@ -41,7 +46,8 @@ public class OrdersController {
     @PostMapping("/orders/{orderId}/tip")
     ResponseEntity<ResponseDTO> addTip(String orderId, @RequestBody AddTipDTO addTip) {
         log.info("Received request to add tip to '{}' an order, value: {}", orderId, addTip);
-        inbox.storeMessage(ORDERING_INBOX, addTip);
+        addTip.setOrderId(orderId);
+        inboxPublisher.storeMessage(ORDERING_INBOX + ":tip", addTip);
 
         return ResponseEntity.accepted().body(new ResponseDTO(orderId));
     }

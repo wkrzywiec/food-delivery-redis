@@ -1,6 +1,6 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
-import io.wkrzywiec.fooddelivery.ordering.incoming.CreateOrder;
+import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
 import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
 

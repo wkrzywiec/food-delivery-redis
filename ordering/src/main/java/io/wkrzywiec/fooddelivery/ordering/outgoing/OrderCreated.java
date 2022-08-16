@@ -1,6 +1,6 @@
 package io.wkrzywiec.fooddelivery.ordering.outgoing;
 
-import io.wkrzywiec.fooddelivery.ordering.incoming.Item;
+import io.wkrzywiec.fooddelivery.commons.incoming.Item;
 
 import java.math.BigDecimal;
 import java.util.List;

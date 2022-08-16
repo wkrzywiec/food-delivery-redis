@@ -15,7 +15,9 @@ import java.util.List;
 public class RedisQueueCreator implements ApplicationListener<ContextRefreshedEvent> {
 
     private final RqueueEndpointManager rqueueEndpointManager;
-    private final List<String> inboxes = List.of("ordering-inbox", "delivery-inbox");
+    private final List<String> inboxes = List.of(
+            "ordering-inbox:create", "ordering-inbox:cancel", "ordering-inbox:tip",
+            "delivery-inbox:update", "delivery-inbox:delivery-man");
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {

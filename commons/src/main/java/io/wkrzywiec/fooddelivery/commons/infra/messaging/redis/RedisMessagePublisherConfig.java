@@ -15,7 +15,7 @@ public class RedisMessagePublisherConfig {
 
     @Bean
     public MessagePublisher messagePublisher(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
-        return new RedisMessagePublisher(redisTemplate, objectMapper);
+        return new RedisStreamPublisher(redisTemplate, objectMapper);
     }
 
     @Bean

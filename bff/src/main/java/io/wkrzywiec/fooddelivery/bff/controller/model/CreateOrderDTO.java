@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.bff.controller;
+package io.wkrzywiec.fooddelivery.bff.controller.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.bff.controller;
+package io.wkrzywiec.fooddelivery.bff.controller.model;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateOrderDTO {
+public class CancelOrderDTO {
 
-    @Schema(allowableValues = {"cancel"}, required = true)
-    private String status;
+    private String orderId;
+    private String reason;
 }

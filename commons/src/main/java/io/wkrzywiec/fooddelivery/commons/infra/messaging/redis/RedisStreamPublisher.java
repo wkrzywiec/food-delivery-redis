@@ -14,7 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RedisMessagePublisher implements MessagePublisher {
+public class RedisStreamPublisher implements MessagePublisher {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper mapper;

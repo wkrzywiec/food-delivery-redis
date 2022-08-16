@@ -16,7 +16,6 @@ import java.time.Duration;
 @Slf4j
 public abstract class RedisMessageConsumerConfig {
 
-
     protected Subscription createSubscription(RedisTemplate<String, String> redisTemplate,
                                               RedisConnectionFactory factory,
                                               RedisStreamListener streamListener) {

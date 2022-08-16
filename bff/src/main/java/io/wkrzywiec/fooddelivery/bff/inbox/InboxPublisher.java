@@ -1,6 +1,6 @@
 package io.wkrzywiec.fooddelivery.bff.inbox;
 
-public interface Inbox {
+public interface InboxPublisher {
 
     void storeMessage(String channel, Object message);
 }

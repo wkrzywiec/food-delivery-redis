@@ -11,7 +11,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 
 import java.time.Instant
 
-class RedisMessagePublisherIT extends CommonsIntegrationTest {
+class RedisStreamPublisherIT extends CommonsIntegrationTest {
 
     private final String testChannel = "testing-channel"
 

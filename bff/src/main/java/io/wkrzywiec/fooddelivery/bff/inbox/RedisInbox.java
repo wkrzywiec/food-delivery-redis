@@ -18,12 +18,6 @@ public class RedisInbox implements Inbox {
 
     @Override
     public void storeMessage(String inbox, Object message) {
-        String messageJson = null;
-        try {
-            messageJson = objectMapper.writeValueAsString(message);
-            redisQueue.enqueue(inbox, messageJson);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to publish message", e);
-        }
+        redisQueue.enqueue(inbox, message);
     }
 }

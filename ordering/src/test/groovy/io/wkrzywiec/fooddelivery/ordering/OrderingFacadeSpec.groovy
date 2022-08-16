@@ -74,7 +74,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderCreated")
 
             def body = event.body() as OrderCreated
-            body.id() == orderId
+            body.orderId() == orderId
             body.customerId() == order.getCustomerId()
             body.restaurantId() == order.getRestaurantId()
             body.address() == order.getAddress()

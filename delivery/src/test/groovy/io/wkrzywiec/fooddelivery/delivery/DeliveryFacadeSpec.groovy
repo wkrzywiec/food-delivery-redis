@@ -313,7 +313,7 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
+        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId)
 
         when:
         facade.handle(assignDeliveryMan)
@@ -343,7 +343,7 @@ class DeliveryFacadeSpec extends Specification {
         repository.save(delivery.entity())
 
         and:
-        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
+        var assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId)
 
         when:
         facade.handle(assignDeliveryMan)
@@ -367,36 +367,6 @@ class DeliveryFacadeSpec extends Specification {
         status << [DeliveryStatus.CANCELED, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED]
     }
 
-    def "Fail to un assign delivery man if it's not assigned"() {
-        given:
-        def otherDeliveryManId = "other-delivery-man"
-        def delivery = aDelivery()
-                .withDeliveryManId(otherDeliveryManId)
-        repository.save(delivery.entity())
-
-        and:
-        def deliveryManId = "any-delivery-man-orderId"
-        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
-
-        when:
-        facade.handle(assignDeliveryMan)
-
-        then: "Delivery man has not been changed"
-        with(repository.findByOrderId(delivery.orderId).get()) { deliveryEntity ->
-            deliveryEntity.deliveryManId == otherDeliveryManId
-        }
-
-        and: "DeliveryProcessingError event is published on 'orders' channel"
-        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
-
-            verifyEventHeader(event, delivery.orderId, "DeliveryProcessingError")
-
-            def body = event.body() as DeliveryProcessingError
-            body.orderId() == delivery.orderId
-            body.details() == "Failed to un assign delivery man from an '$delivery.orderId' order. Delivery has assigned '$otherDeliveryManId' person, but was asked to un assign '$deliveryManId'"
-        }
-    }
-
     def "Fail to un assign delivery man if there is no one assigned"() {
         given:
         def delivery = aDelivery()
@@ -405,7 +375,7 @@ class DeliveryFacadeSpec extends Specification {
 
         and:
         def deliveryManId = "any-delivery-man-orderId"
-        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId, deliveryManId)
+        def assignDeliveryMan = new UnAssignDeliveryMan(delivery.orderId)
 
         when:
         facade.handle(assignDeliveryMan)

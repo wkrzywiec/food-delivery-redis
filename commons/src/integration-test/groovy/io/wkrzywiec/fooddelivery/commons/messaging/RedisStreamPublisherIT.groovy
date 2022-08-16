@@ -1,6 +1,6 @@
 package io.wkrzywiec.fooddelivery.commons.messaging
 
-
+import io.wkrzywiec.fooddelivery.commons.infra.RedisConfig
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher
@@ -24,7 +24,7 @@ class RedisStreamPublisherIT extends CommonsIntegrationTest {
         def connectionFactory = new LettuceConnectionFactory(redisStandaloneConfig)
         connectionFactory.afterPropertiesSet()
         def redisTemplate = config.redisTemplate(connectionFactory)
-        messagePublisher = config.messagePublisher(redisTemplate)
+        messagePublisher = config.messagePublisher(redisTemplate, new RedisConfig().objectMapper())
 
         redis = new RedisStreamTestClient(redisTemplate)
 

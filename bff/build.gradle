@@ -39,7 +39,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-//    implementation 'io.springfox:springfox-boot-starter:3.0.0'
+    implementation 'com.github.sonus21:rqueue-spring-boot-starter:2.10.2-RELEASE'
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
     implementation 'com.h2database:h2:2.1.214'
     implementation 'io.vavr:vavr:0.10.4'

@@ -8,5 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChangeDeliveryManDTO {
+    private String orderId;
     private String deliveryManId;
 }

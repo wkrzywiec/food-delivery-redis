@@ -26,6 +26,7 @@ public class RedisQueueCreator implements ApplicationListener<ContextRefreshedEv
             log.info("Creating {} queue in Redis for an inbox.", inbox);
             if (rqueueEndpointManager.isQueueRegistered(inbox)){
                 log.info("{} queue already exists, therefore it's creation will be skipped", inbox);
+                continue;
             }
 
             rqueueEndpointManager.registerQueue(inbox, "1");

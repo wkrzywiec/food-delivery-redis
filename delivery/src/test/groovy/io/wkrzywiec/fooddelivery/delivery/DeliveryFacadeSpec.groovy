@@ -1,15 +1,15 @@
 package io.wkrzywiec.fooddelivery.delivery
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.wkrzywiec.fooddelivery.delivery.incoming.AssignDeliveryMan
+
+import io.wkrzywiec.fooddelivery.commons.incoming.AssignDeliveryMan
 import io.wkrzywiec.fooddelivery.delivery.incoming.Item
-import io.wkrzywiec.fooddelivery.delivery.incoming.DeliverFood
-import io.wkrzywiec.fooddelivery.delivery.incoming.FoodReady
+import io.wkrzywiec.fooddelivery.commons.incoming.DeliverFood
+import io.wkrzywiec.fooddelivery.commons.incoming.FoodReady
 import io.wkrzywiec.fooddelivery.delivery.incoming.OrderCanceled
 import io.wkrzywiec.fooddelivery.delivery.incoming.OrderCreated
-import io.wkrzywiec.fooddelivery.delivery.incoming.PickUpFood
-import io.wkrzywiec.fooddelivery.delivery.incoming.PrepareFood
-import io.wkrzywiec.fooddelivery.delivery.incoming.UnAssignDeliveryMan
+import io.wkrzywiec.fooddelivery.commons.incoming.PickUpFood
+import io.wkrzywiec.fooddelivery.commons.incoming.PrepareFood
+import io.wkrzywiec.fooddelivery.commons.incoming.UnAssignDeliveryMan
 import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryCanceled
 import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryCreated
 import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryManAssigned

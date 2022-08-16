@@ -115,13 +115,9 @@ class Delivery {
         this.deliveryManId = deliveryManId;
     }
 
-    public void unAssignDeliveryMan(String deliveryManId) {
+    public void unAssignDeliveryMan() {
         if (this.deliveryManId == null) {
             throw new DeliveryException(format("Failed to un assign delivery man from an '%s' order. There is no delivery man assigned to this delivery", orderId));
-        }
-
-        if (!this.deliveryManId.equals(deliveryManId)) {
-            throw new DeliveryException(format("Failed to un assign delivery man from an '%s' order. Delivery has assigned '%s' person, but was asked to un assign '%s'", orderId, this.deliveryManId, deliveryManId));
         }
 
         if (List.of(DeliveryStatus.CANCELED, DeliveryStatus.FOOD_PICKED, DeliveryStatus.FOOD_DELIVERED).contains(status)) {

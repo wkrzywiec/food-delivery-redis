@@ -1,16 +1,11 @@
 package io.wkrzywiec.fooddelivery.bff.inbox;
 
 import com.github.sonus21.rqueue.annotation.RqueueListener;
-import io.wkrzywiec.fooddelivery.bff.controller.model.AddTipDTO;
-import io.wkrzywiec.fooddelivery.bff.controller.model.CancelOrderDTO;
-import io.wkrzywiec.fooddelivery.bff.controller.model.CreateOrderDTO;
-import io.wkrzywiec.fooddelivery.commons.incoming.AddTip;
-import io.wkrzywiec.fooddelivery.commons.incoming.CancelOrder;
-import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
-import io.wkrzywiec.fooddelivery.commons.incoming.Item;
+import io.wkrzywiec.fooddelivery.bff.controller.model.*;
+import io.wkrzywiec.fooddelivery.commons.incoming.*;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
-import io.wkrzywiec.fooddelivery.commons.infra.messaging.redis.RedisStreamPublisher;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -26,7 +21,7 @@ import java.util.UUID;
 public class RedisInboxListener {
 
     private static final String ORDERS_CHANNEL = "orders";
-    private final RedisStreamPublisher redisStreamPublisher;
+    private final MessagePublisher redisStreamPublisher;
     private final Clock clock;
 
     @RqueueListener(value = "ordering-inbox:create")
@@ -55,6 +50,39 @@ public class RedisInboxListener {
         var command = command(addTipDTO.getOrderId(), new AddTip(addTipDTO.getOrderId(), addTipDTO.getTip()));
 
         redisStreamPublisher.send(command);
+    }
+
+    @RqueueListener(value = "delivery-inbox:update")
+    public void updateDelivery(UpdateDeliveryDTO updateDeliveryDTO) {
+        log.info("Received a command to update a delivery: {}", updateDeliveryDTO);
+        var command = command(updateDeliveryDTO.getOrderId(), generateCommand(updateDeliveryDTO));
+
+        redisStreamPublisher.send(command);
+    }
+
+    private Object generateCommand(UpdateDeliveryDTO updateDeliveryDTO) {
+        return switch (updateDeliveryDTO.getStatus()) {
+            case "prepareFood" -> new PrepareFood(updateDeliveryDTO.getOrderId());
+            case "foodReady" -> new FoodReady(updateDeliveryDTO.getOrderId());
+            case "pickUpFood" -> new PickUpFood(updateDeliveryDTO.getOrderId());
+            case "deliverFood" -> new DeliverFood(updateDeliveryDTO.getOrderId());
+            default -> throw new RuntimeException(updateDeliveryDTO.getStatus() + " delivery status is not supported.");
+        };
+    }
+
+    @RqueueListener(value = "delivery-inbox:delivery-man")
+    public void changeDeliveryMan(ChangeDeliveryManDTO changeDeliveryManDTO) {
+        log.info("Received a command to set a delivery man for an order: {}", changeDeliveryManDTO);
+        var command = command(changeDeliveryManDTO.getOrderId(), generateCommand(changeDeliveryManDTO));
+
+        redisStreamPublisher.send(command);
+    }
+
+    private Object generateCommand(ChangeDeliveryManDTO changeDeliveryManDTO) {
+        if (changeDeliveryManDTO.getDeliveryManId() == null) {
+            return new UnAssignDeliveryMan(changeDeliveryManDTO.getOrderId());
+        }
+        return new AssignDeliveryMan(changeDeliveryManDTO.getOrderId(), changeDeliveryManDTO.getDeliveryManId());
     }
 
     private Message command(String orderId, Object commandBody) {

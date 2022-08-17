@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.ordering.incoming;
+package io.wkrzywiec.fooddelivery.commons.incoming;
 
 public record CancelOrder(String id, String reason) {
 }

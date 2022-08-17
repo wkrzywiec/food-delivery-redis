@@ -1,10 +1,10 @@
 package io.wkrzywiec.fooddelivery.ordering
 
-import com.fasterxml.jackson.databind.ObjectMapper
+
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.FakeMessagePublisher
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
-import io.wkrzywiec.fooddelivery.ordering.incoming.AddTip
-import io.wkrzywiec.fooddelivery.ordering.incoming.CancelOrder
+import io.wkrzywiec.fooddelivery.commons.incoming.AddTip
+import io.wkrzywiec.fooddelivery.commons.incoming.CancelOrder
 import io.wkrzywiec.fooddelivery.ordering.incoming.FoodDelivered
 import io.wkrzywiec.fooddelivery.ordering.incoming.FoodInPreparation
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCanceled
@@ -74,7 +74,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderCreated")
 
             def body = event.body() as OrderCreated
-            body.id() == orderId
+            body.orderId() == orderId
             body.customerId() == order.getCustomerId()
             body.restaurantId() == order.getRestaurantId()
             body.address() == order.getAddress()

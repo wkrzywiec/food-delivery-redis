@@ -1,8 +1,8 @@
 package io.wkrzywiec.fooddelivery.delivery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
+import io.wkrzywiec.fooddelivery.commons.incoming.*;
 import io.wkrzywiec.fooddelivery.delivery.outgoing.Item;
 import io.wkrzywiec.fooddelivery.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.delivery.outgoing.*;
@@ -91,13 +91,13 @@ public class DeliveryFacade {
     }
 
     public void handle(UnAssignDeliveryMan unAssignDeliveryMan) {
-        log.info("Un assigning a delivery man with orderId: '{}' from a '{}' delivery", unAssignDeliveryMan.deliveryManId(), unAssignDeliveryMan.orderId());
+        log.info("Un assigning a delivery man from a '{}' delivery", unAssignDeliveryMan.orderId());
 
         var delivery = findDelivery(unAssignDeliveryMan.orderId());
 
         process(
                 delivery,
-                () -> delivery.unAssignDeliveryMan(unAssignDeliveryMan.deliveryManId()),
+                delivery::unAssignDeliveryMan,
                 new DeliveryManUnAssigned(delivery.getOrderId(), delivery.getDeliveryManId()),
                 "Failed to un assign delivery man."
         );

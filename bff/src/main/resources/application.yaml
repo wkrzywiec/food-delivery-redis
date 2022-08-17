@@ -1,0 +1,29 @@
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  application:
+    name: 'food-delivery_bff'
+  datasource:
+    url: jdbc:h2:mem:bff
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+---
+server:
+  port: 8081
+
+spring:
+  profiles: dev
+
+---
+spring:
+  profiles: prod

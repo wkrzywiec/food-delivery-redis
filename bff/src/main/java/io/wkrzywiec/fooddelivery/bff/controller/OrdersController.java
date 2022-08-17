@@ -20,7 +20,7 @@ public class OrdersController {
     private final InboxPublisher inboxPublisher;
     private static final String ORDERING_INBOX = "ordering-inbox";
 
-    @PostMapping("/orders/")
+    @PostMapping("/orders")
     ResponseEntity<ResponseDTO> createAnOrder(@RequestBody CreateOrderDTO createOrder) {
         log.info("Received request to create an order: {}", createOrder);
         if (createOrder.getId() == null) {
@@ -35,7 +35,7 @@ public class OrdersController {
     }
 
     @PatchMapping("/orders/{orderId}/status/cancel")
-    ResponseEntity<ResponseDTO> cancelAnOrder(String orderId, @RequestBody CancelOrderDTO updateOrder) {
+    ResponseEntity<ResponseDTO> cancelAnOrder(@PathVariable String orderId, @RequestBody CancelOrderDTO updateOrder) {
         log.info("Received request to update an '{}' order, update: {}", orderId, updateOrder);
         updateOrder.setOrderId(orderId);
         inboxPublisher.storeMessage(ORDERING_INBOX + ":cancel", updateOrder);
@@ -44,7 +44,7 @@ public class OrdersController {
     }
 
     @PostMapping("/orders/{orderId}/tip")
-    ResponseEntity<ResponseDTO> addTip(String orderId, @RequestBody AddTipDTO addTip) {
+    ResponseEntity<ResponseDTO> addTip(@PathVariable String orderId, @RequestBody AddTipDTO addTip) {
         log.info("Received request to add tip to '{}' an order, value: {}", orderId, addTip);
         addTip.setOrderId(orderId);
         inboxPublisher.storeMessage(ORDERING_INBOX + ":tip", addTip);

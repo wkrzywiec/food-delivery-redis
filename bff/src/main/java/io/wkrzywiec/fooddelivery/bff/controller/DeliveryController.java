@@ -7,10 +7,7 @@ import io.wkrzywiec.fooddelivery.bff.controller.model.UpdateDeliveryDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -21,7 +18,7 @@ public class DeliveryController {
     private static final String DELIVERY_INBOX = "delivery-inbox";
 
     @PatchMapping("/deliveries/{orderId}")
-    ResponseEntity<ResponseDTO> updateADelivery(String orderId, @RequestBody UpdateDeliveryDTO updateDelivery) {
+    ResponseEntity<ResponseDTO> updateADelivery(@PathVariable String orderId, @RequestBody UpdateDeliveryDTO updateDelivery) {
         log.info("Received request to update a delivery for an '{}' order, update: {}", orderId, updateDelivery);
         updateDelivery.setOrderId(orderId);
         inboxPublisher.storeMessage(DELIVERY_INBOX + ":update", updateDelivery);
@@ -30,7 +27,7 @@ public class DeliveryController {
     }
 
     @PostMapping("/deliveries/{orderId}/delivery-man")
-    ResponseEntity<ResponseDTO> addTip(String orderId, @RequestBody ChangeDeliveryManDTO changeDeliveryMan) {
+    ResponseEntity<ResponseDTO> deliveryMan(@PathVariable String orderId, @RequestBody ChangeDeliveryManDTO changeDeliveryMan) {
         log.info("Received request to assign '{}' delivery man to an '{}' order", changeDeliveryMan.getDeliveryManId(), orderId);
         changeDeliveryMan.setOrderId(orderId);
         inboxPublisher.storeMessage(DELIVERY_INBOX + ":delivery-man", changeDeliveryMan);

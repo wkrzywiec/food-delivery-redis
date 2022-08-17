@@ -132,7 +132,7 @@ class OrdersControllerSpec extends Specification {
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
 
-        then: "OrderId is generated"
+        then:
         result.andExpect(status().isAccepted())
                 .andExpect(jsonPath("orderId").value("any-order-id"))
 
@@ -152,7 +152,7 @@ class OrdersControllerSpec extends Specification {
             }
         """
 
-        when: "Create an order"
+        when: "Add tip"
         def result = mockMvc.perform(
                 post("/orders/any-order-id/tip")
                         .content(requestBody)
@@ -160,7 +160,7 @@ class OrdersControllerSpec extends Specification {
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
 
-        then: "OrderId is generated"
+        then:
         result.andExpect(status().isAccepted())
                 .andExpect(jsonPath("orderId").value("any-order-id"))
 

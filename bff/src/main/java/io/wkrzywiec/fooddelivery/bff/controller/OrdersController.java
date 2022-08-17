@@ -35,10 +35,10 @@ public class OrdersController {
     }
 
     @PatchMapping("/orders/{orderId}/status/cancel")
-    ResponseEntity<ResponseDTO> cancelAnOrder(@PathVariable String orderId, @RequestBody CancelOrderDTO updateOrder) {
-        log.info("Received request to update an '{}' order, update: {}", orderId, updateOrder);
-        updateOrder.setOrderId(orderId);
-        inboxPublisher.storeMessage(ORDERING_INBOX + ":cancel", updateOrder);
+    ResponseEntity<ResponseDTO> cancelAnOrder(@PathVariable String orderId, @RequestBody CancelOrderDTO cancelOrderD) {
+        log.info("Received request to update an '{}' order, update: {}", orderId, cancelOrderD);
+        cancelOrderD.setOrderId(orderId);
+        inboxPublisher.storeMessage(ORDERING_INBOX + ":cancel", cancelOrderD);
 
         return ResponseEntity.accepted().body(new ResponseDTO(orderId));
     }

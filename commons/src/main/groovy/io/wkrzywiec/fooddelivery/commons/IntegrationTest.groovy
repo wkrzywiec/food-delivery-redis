@@ -62,7 +62,7 @@ abstract class IntegrationTest extends Specification {
 
     static boolean useLocalInfrastructure() {
         // change it to `true` in order to use it with infra from docker-compose.yaml
-        false
+        true
     }
 
     @Autowired
@@ -84,6 +84,7 @@ abstract class IntegrationTest extends Specification {
 
         System.out.println("Clearing 'orders' stream from old messages")
         redisTemplate.opsForStream().trim("orders", 0)
+        redisTemplate.opsForStream().trim("ordering::any-id", 0)
     }
 
     static class IntegrationTestContainerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

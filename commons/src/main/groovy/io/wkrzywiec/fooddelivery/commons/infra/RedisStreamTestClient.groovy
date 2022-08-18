@@ -46,7 +46,11 @@ class RedisStreamTestClient {
     }
 
     public String publishMessage(Message message) {
-        log.info("Publishing '{}' message on channel: '{}', body: '{}'", message.header().type(), message.header().channel(), message.body());
+        publishMessage(message.header().channel(), message)
+    }
+
+    public String publishMessage(String streamName, Message message) {
+        log.info("Publishing '{}' message to stream: '{}', body: '{}'", message.header().type(), streamName, message.body())
 
         String messageJson = null
         try {
@@ -59,13 +63,13 @@ class RedisStreamTestClient {
 
         ObjectRecord<String, String> record = StreamRecords.newRecord()
                 .ofObject(messageJson)
-                .withStreamKey(message.header().channel());
+                .withStreamKey(streamName)
 
         RecordId recordId = redisTemplate.opsForStream()
-                .add(record);
+                .add(record)
 
-        log.info("'{}' message was published on channel: '{}', full message: '{}'. Record id: {}",
-                message.header().type(), message.header().channel(), message, recordId.getValue())
+        log.info("'{}' message was published to stream: '{}', full message: '{}'. Record id: {}",
+                message.header().type(), streamName, message, recordId.getValue())
     }
 
     public JsonNode getLatestMessageFromStreamAsJson(String stream) {

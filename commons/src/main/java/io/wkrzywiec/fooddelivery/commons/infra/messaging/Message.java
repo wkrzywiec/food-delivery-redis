@@ -1,4 +1,6 @@
 package io.wkrzywiec.fooddelivery.commons.infra.messaging;
 
-public record Message(Header header, Object body) {
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
+
+public record Message(Header header, DomainMessageBody body) {
 }

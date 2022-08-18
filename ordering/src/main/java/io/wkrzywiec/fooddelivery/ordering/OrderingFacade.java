@@ -1,6 +1,7 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
 import io.vavr.control.Try;
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.AddTip;
 import io.wkrzywiec.fooddelivery.commons.incoming.CancelOrder;
 import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
@@ -51,13 +52,13 @@ public class OrderingFacade {
     }
 
     public void handle(CancelOrder cancelOrder) {
-        log.info("Cancelling an order: {}", cancelOrder.id());
+        log.info("Cancelling an order: {}", cancelOrder.orderId());
 
-        var order = repository.findById(cancelOrder.id())
-                .orElseThrow(() -> new OrderingException(format("Failed to cancel an %s order. There is no such order with provided id.", cancelOrder.id())));
+        var order = repository.findById(cancelOrder.orderId())
+                .orElseThrow(() -> new OrderingException(format("Failed to cancel an %s order. There is no such order with provided id.", cancelOrder.orderId())));
 
         Try.run(() -> order.cancelOrder(cancelOrder.reason()))
-                .onSuccess(v -> publishSuccessEvent(order.getId(), new OrderCanceled(cancelOrder.id(), cancelOrder.reason())))
+                .onSuccess(v -> publishSuccessEvent(order.getId(), new OrderCanceled(cancelOrder.orderId(), cancelOrder.reason())))
                 .onFailure(ex -> publishingFailureEvent(order.getId(), "Failed to cancel an order.", ex))
                 .andFinally(() -> log.info("Cancellation of an order '{}' has been completed", order.getId()));
     }
@@ -98,7 +99,7 @@ public class OrderingFacade {
                 .andFinally(() -> log.info("Setting an '{}' order to COMPLETED state has been completed", foodDelivered.orderId()));
     }
 
-    private void publishSuccessEvent(String orderId, Object eventObject) {
+    private void publishSuccessEvent(String orderId, DomainMessageBody eventObject) {
         log.info("Publishing success event: {}", eventObject);
         Message event = resultingEvent(orderId, eventObject);
         publisher.send(event);
@@ -110,7 +111,7 @@ public class OrderingFacade {
         publisher.send(event);
     }
 
-    private Message resultingEvent(String orderId, Object eventBody) {
+    private Message resultingEvent(String orderId, DomainMessageBody eventBody) {
         return new Message(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
     }
 

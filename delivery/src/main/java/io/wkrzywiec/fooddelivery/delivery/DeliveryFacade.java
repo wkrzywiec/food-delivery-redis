@@ -2,6 +2,7 @@ package io.wkrzywiec.fooddelivery.delivery;
 
 import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.*;
 import io.wkrzywiec.fooddelivery.delivery.outgoing.Item;
 import io.wkrzywiec.fooddelivery.delivery.incoming.*;
@@ -148,13 +149,13 @@ public class DeliveryFacade {
                 .orElseThrow(() -> new DeliveryException(format("There is no delivery with an orderId '%s'.", orderId)));
     }
 
-    private void process(Delivery delivery, CheckedRunnable runProcess, Object successEvent, String failureMessage) {
+    private void process(Delivery delivery, CheckedRunnable runProcess, DomainMessageBody successEvent, String failureMessage) {
         Try.run(runProcess)
                 .onSuccess(v -> publishSuccessEvent(delivery.getOrderId(), successEvent))
                 .onFailure(ex -> publishingFailureEvent(delivery.getOrderId(), failureMessage, ex));
     };
 
-    private void publishSuccessEvent(String orderId, Object eventObject) {
+    private void publishSuccessEvent(String orderId, DomainMessageBody eventObject) {
         log.info("Publishing success event: {}", eventObject);
         Message event = resultingEvent(orderId, eventObject);
         publisher.send(event);
@@ -166,7 +167,7 @@ public class DeliveryFacade {
         publisher.send(event);
     }
 
-    private Message resultingEvent(String orderId, Object eventBody) {
+    private Message resultingEvent(String orderId, DomainMessageBody eventBody) {
         return new Message(eventHeader(orderId, eventBody.getClass().getSimpleName()), eventBody);
     }
 

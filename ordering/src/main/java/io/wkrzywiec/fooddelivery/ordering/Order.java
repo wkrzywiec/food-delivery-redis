@@ -54,7 +54,7 @@ class Order {
 
     static Order from(CreateOrder createOrder) {
         var order = new Order(
-                createOrder.id(),
+                createOrder.orderId(),
                 createOrder.customerId(),
                 createOrder.restaurantId(),
                 createOrder.items().stream().map(dto -> Item.builder()

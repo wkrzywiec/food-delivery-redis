@@ -1,4 +1,6 @@
 package io.wkrzywiec.fooddelivery.commons.incoming;
 
-public record PrepareFood(String orderId) {
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
+
+public record PrepareFood(String orderId) implements DomainMessageBody {
 }

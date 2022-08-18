@@ -1,4 +1,6 @@
 package io.wkrzywiec.fooddelivery.delivery.outgoing;
 
-public record DeliveryCanceled(String orderId, String reason) {
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
+
+public record DeliveryCanceled(String orderId, String reason) implements DomainMessageBody {
 }

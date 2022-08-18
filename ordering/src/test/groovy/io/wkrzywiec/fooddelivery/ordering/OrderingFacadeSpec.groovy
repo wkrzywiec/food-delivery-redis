@@ -108,7 +108,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderCancelled")
 
             def body = event.body() as OrderCanceled
-            body.id() == order.id
+            body.orderId() == order.id
             body.reason() == cancellationReason
         }
     }
@@ -135,7 +135,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
             def body = event.body() as OrderProcessingError
-            body.id() == order.id
+            body.orderId() == order.id
             body.details() == "Failed to cancel an $order.id order. It's not possible to cancel an order with '$status' status"
         }
 
@@ -165,7 +165,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderInProgress")
 
             def body = event.body() as OrderInProgress
-            body.id() == order.id
+            body.orderId() == order.id
         }
     }
 
@@ -191,7 +191,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
             def body = event.body() as OrderProcessingError
-            body.id() == order.id
+            body.orderId() == order.id
             body.details() == "Failed to set an '$order.id' order to IN_PROGRESS. It's not allowed to do it for an order with '$status' status"
         }
 
@@ -283,7 +283,7 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderProcessingError")
 
             def body = event.body() as OrderProcessingError
-            body.id() == order.id
+            body.orderId() == order.id
             body.details() == "Failed to set an '$order.id' order to COMPLETED. It's not allowed to do it for an order with '$status' status"
         }
 

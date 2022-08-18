@@ -1,5 +1,6 @@
 package io.wkrzywiec.fooddelivery.commons.messaging
 
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody
 import io.wkrzywiec.fooddelivery.commons.infra.RedisConfig
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
@@ -52,10 +53,10 @@ class RedisStreamPublisherIT extends CommonsIntegrationTest {
 
         publishedMessage.get("header").get("itemId").asText() == itemId
         publishedMessage.get("header").get("type").asText() == "MessageTestBody"
-        publishedMessage.get("body").get("id").asText() == itemId
+        publishedMessage.get("body").get("orderId").asText() == itemId
     }
 
-    private Message event(String itemId, Object eventBody) {
+    private Message event(String itemId, DomainMessageBody eventBody) {
         return new Message(eventHeader(itemId, eventBody.getClass().getSimpleName()), eventBody)
     }
 

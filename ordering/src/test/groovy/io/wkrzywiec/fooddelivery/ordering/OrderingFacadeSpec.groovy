@@ -5,13 +5,13 @@ import io.wkrzywiec.fooddelivery.commons.infra.messaging.FakeMessagePublisher
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
 import io.wkrzywiec.fooddelivery.commons.incoming.AddTip
 import io.wkrzywiec.fooddelivery.commons.incoming.CancelOrder
+import io.wkrzywiec.fooddelivery.commons.infra.repository.InMemoryEventStore
 import io.wkrzywiec.fooddelivery.ordering.incoming.FoodDelivered
 import io.wkrzywiec.fooddelivery.ordering.incoming.FoodInPreparation
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCanceled
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCompleted
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCreated
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderInProgress
-import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderProcessingError
 import io.wkrzywiec.fooddelivery.ordering.outgoing.TipAddedToOrder
 import spock.lang.Specification
 import spock.lang.Subject
@@ -22,6 +22,7 @@ import java.time.Instant
 
 import static ItemTestData.anItem
 import static OrderTestData.anOrder
+import static io.wkrzywiec.fooddelivery.commons.infra.messaging.Message.message
 
 @Subject(OrderingFacade)
 @Title("Specification for ordering process")
@@ -30,16 +31,16 @@ class OrderingFacadeSpec extends Specification {
     private final String ORDERS_CHANNEL = "orders"
 
     OrderingFacade facade
-    InMemoryOrderingRepository repository
+    InMemoryEventStore eventStore
     FakeMessagePublisher publisher
 
     var testTime = Instant.parse("2022-08-08T05:30:24.00Z")
     Clock testClock = Clock.fixed(testTime)
 
     def setup() {
-        repository = new InMemoryOrderingRepository()
+        eventStore = new InMemoryEventStore()
         publisher = new FakeMessagePublisher()
-        facade = new OrderingFacade(repository, publisher, testClock)
+        facade = new OrderingFacade(eventStore, publisher, testClock)
     }
 
     def "Create an order"() {
@@ -53,41 +54,29 @@ class OrderingFacadeSpec extends Specification {
         when:
         facade.handle(order.createOrder())
 
-        then: "Order is saved"
-        with(repository.database.values().find() as Order) { savedOrder ->
-            savedOrder.id != null
-            savedOrder.customerId == order.getCustomerId()
-            savedOrder.restaurantId == order.getRestaurantId()
-            savedOrder.address == order.getAddress()
-            savedOrder.items == order.getItems().stream().map(ItemTestData::entity).toList()
-            savedOrder.status == OrderStatus.CREATED
-            savedOrder.deliveryCharge == order.getDeliveryCharge()
-            savedOrder.tip == 0
-            savedOrder.total == 5.5 + order.getDeliveryCharge()
-        }
+        then: "Event is saved in a store"
+        def expectedEvent = order.orderCreated()
+        def storedEvents = eventStore.getEventsForOrder(order.getId())
+        storedEvents.size() == 1
+        storedEvents[0] == expectedEvent
 
+        and:
+        Order.from(storedEvents).getStatus() == OrderStatus.CREATED
 
         and: "OrderCreated event is published on 'orders' channel"
-        String orderId = repository.database.values().find().id
         with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCreated")
 
             def body = event.body() as OrderCreated
-            body.orderId() == orderId
-            body.customerId() == order.getCustomerId()
-            body.restaurantId() == order.getRestaurantId()
-            body.address() == order.getAddress()
-            body.items() == order.getItems().stream().map(ItemTestData::dto).toList()
-            body.deliveryCharge() == order.getDeliveryCharge()
-            body.total() == 5.5 + order.getDeliveryCharge()
+            body == expectedEvent
         }
     }
 
     def "Cancel an order"() {
         given:
         var order = anOrder()
-        repository.save(order.entity())
+        eventStore.store(message("order", testClock, order.orderCreated()))
 
         and:
         var cancellationReason = "Not hungry anymore"
@@ -96,57 +85,28 @@ class OrderingFacadeSpec extends Specification {
         when:
         facade.handle(cancelOrder)
 
-        then: "Order is canceled"
-        with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == OrderStatus.CANCELED
-            cancelledOrder.metadata.get("cancellationReason") == cancellationReason
-        }
+        then: "Event is saved in a store"
+        def expectedEvent = new OrderCanceled(order.getId(), cancellationReason)
+        def storedEvents = eventStore.getEventsForOrder(order.getId())
+        storedEvents.size() == 2
+        storedEvents[1] == expectedEvent
+
+        and:
+        Order.from(storedEvents).getStatus() == OrderStatus.CANCELED
 
         and: "OrderCancelled event is published on 'orders' channel"
         with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
 
             verifyEventHeader(event, order.id, "OrderCancelled")
-
             def body = event.body() as OrderCanceled
-            body.orderId() == order.id
-            body.reason() == cancellationReason
+            body == expectedEvent
         }
-    }
-
-    def "Fail to cancel a #status order"() {
-        given:
-        var order = anOrder().withStatus(status)
-        repository.save(order.entity())
-
-        and:
-        var cancelOrder = new CancelOrder(order.id, "Not hungry anymore")
-
-        when:
-        facade.handle(cancelOrder)
-
-        then: "Order is not canceled"
-        with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == order.getStatus()
-        }
-
-        and: "OrderProcessingError event is published on 'orders' channel"
-        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
-
-            verifyEventHeader(event, order.id, "OrderProcessingError")
-
-            def body = event.body() as OrderProcessingError
-            body.orderId() == order.id
-            body.details() == "Failed to cancel an $order.id order. It's not possible to cancel an order with '$status' status"
-        }
-
-        where:
-        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     def "Set order to IN_PROGRESS"() {
         given:
         var order = anOrder()
-        repository.save(order.entity())
+        eventStore.store(message("order", testClock, order.orderCreated()))
 
         and:
         var foodInPreparation = new FoodInPreparation(order.id)
@@ -154,10 +114,14 @@ class OrderingFacadeSpec extends Specification {
         when:
         facade.handle(foodInPreparation)
 
-        then: "Order is IN_PROGRESS"
-        with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == OrderStatus.IN_PROGRESS
-        }
+        then: "Event is saved in a store"
+        def expectedEvent = new OrderInProgress(order.getId())
+        def storedEvents = eventStore.getEventsForOrder(order.getId())
+        storedEvents.size() == 2
+        storedEvents[1] == expectedEvent
+
+        and:
+        Order.from(storedEvents).getStatus() == OrderStatus.IN_PROGRESS
 
         and: "OrderInProgress event is published on 'orders' channel"
         with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
@@ -165,38 +129,8 @@ class OrderingFacadeSpec extends Specification {
             verifyEventHeader(event, order.id, "OrderInProgress")
 
             def body = event.body() as OrderInProgress
-            body.orderId() == order.id
+            body == expectedEvent
         }
-    }
-
-    def "Fail to set IN_PROGRESS a #status order"() {
-        given:
-        var order = anOrder().withStatus(status)
-        repository.save(order.entity())
-
-        and:
-        var foodInPreparation = new FoodInPreparation(order.id)
-
-        when:
-        facade.handle(foodInPreparation)
-
-        then: "Order has not changed a status"
-        with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == order.getStatus()
-        }
-
-        and: "OrderProcessingError event is published on 'orders' channel"
-        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
-
-            verifyEventHeader(event, order.id, "OrderProcessingError")
-
-            def body = event.body() as OrderProcessingError
-            body.orderId() == order.id
-            body.details() == "Failed to set an '$order.id' order to IN_PROGRESS. It's not allowed to do it for an order with '$status' status"
-        }
-
-        where:
-        status << [OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     def "Add tip to an order"() {
@@ -207,7 +141,7 @@ class OrderingFacadeSpec extends Specification {
         var order = anOrder()
                 .withItems(anItem().withPricePerItem(itemCost))
                 .withDeliveryCharge(deliveryCharge)
-        repository.save(order.entity())
+        eventStore.store(message("order", testClock, order.orderCreated()))
 
         and:
         double tip = 20
@@ -218,10 +152,14 @@ class OrderingFacadeSpec extends Specification {
 
         then: "Tip was added"
         double total = itemCost + deliveryCharge + tip
-        with(repository.findById(order.id).get()) { orderEntity ->
-            orderEntity.tip.doubleValue() == tip
-            orderEntity.total.doubleValue() == total
-        }
+        def storedEvents = eventStore.getEventsForOrder(order.getId())
+        storedEvents.size() == 2
+        def tipAdded = storedEvents[1] as TipAddedToOrder
+        tipAdded.tip().doubleValue() == tip
+        tipAdded.total().doubleValue() == total
+
+        and:
+        Order.from(storedEvents).getTotal().doubleValue() == total
 
         and: "TipAddedToOrder event is published on 'orders' channel"
         with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
@@ -237,8 +175,9 @@ class OrderingFacadeSpec extends Specification {
 
     def "Complete an order"() {
         given:
-        var order = anOrder().withStatus(OrderStatus.IN_PROGRESS)
-        repository.save(order.entity())
+        var order = anOrder()
+        eventStore.store(message("order", testClock, order.orderCreated()))
+        eventStore.store(message("order", testClock, new OrderInProgress(order.getId())))
 
         and:
         var foodDelivered = new FoodDelivered(order.id)
@@ -247,9 +186,13 @@ class OrderingFacadeSpec extends Specification {
         facade.handle(foodDelivered)
 
         then: "Order is completed"
-        with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == OrderStatus.COMPLETED
-        }
+        def expectedEvent = new OrderCompleted(order.getId())
+        def storedEvents = eventStore.getEventsForOrder(order.getId())
+        storedEvents.size() == 3
+        storedEvents[2] == expectedEvent
+
+        and:
+        Order.from(storedEvents).getStatus() == OrderStatus.COMPLETED
 
         and: "OrderCompleted event is published on 'orders' channel"
         with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
@@ -259,36 +202,6 @@ class OrderingFacadeSpec extends Specification {
             def body = event.body() as OrderCompleted
             body.orderId() == order.id
         }
-    }
-
-    def "Fail to complete a #status order"() {
-        given:
-        var order = anOrder().withStatus(status)
-        repository.save(order.entity())
-
-        and:
-        var foodDelivered = new FoodDelivered(order.id)
-
-        when:
-        facade.handle(foodDelivered)
-
-        then: "Order has not changed a status"
-        with(repository.findById(order.id).get()) { cancelledOrder ->
-            cancelledOrder.status == order.getStatus()
-        }
-
-        and: "OrderProcessingError event is published on 'orders' channel"
-        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
-
-            verifyEventHeader(event, order.id, "OrderProcessingError")
-
-            def body = event.body() as OrderProcessingError
-            body.orderId() == order.id
-            body.details() == "Failed to set an '$order.id' order to COMPLETED. It's not allowed to do it for an order with '$status' status"
-        }
-
-        where:
-        status << [OrderStatus.CREATED, OrderStatus.COMPLETED, OrderStatus.CANCELED]
     }
 
     private void verifyEventHeader(Message event, String orderId, String eventType) {

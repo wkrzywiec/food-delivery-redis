@@ -3,7 +3,7 @@ package io.wkrzywiec.fooddelivery.ordering;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
-import io.wkrzywiec.fooddelivery.commons.infra.repository.EventStore;
+import io.wkrzywiec.fooddelivery.commons.infra.repository.RedisEventStore;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Profile("redis")
 @Component
 @Slf4j
-class RedisOrderingEventStore extends EventStore {
+class RedisOrderingEventStore extends RedisEventStore {
 
     public RedisOrderingEventStore(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
         super(redisTemplate, objectMapper);

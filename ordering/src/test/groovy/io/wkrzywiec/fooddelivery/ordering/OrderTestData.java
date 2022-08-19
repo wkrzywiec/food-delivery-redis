@@ -1,6 +1,7 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
 import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
+import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCreated;
 import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
@@ -47,6 +48,11 @@ import static java.lang.String.format;
 
      public CreateOrder createOrder() {
         return new CreateOrder(id, customerId, restaurantId, items.stream().map(ItemTestData::dto).toList(), address, deliveryCharge);
+    }
+
+    public OrderCreated orderCreated() {
+         var entity = entity();
+         return new OrderCreated(id, customerId, restaurantId, address, items.stream().map(ItemTestData::dto).toList(), deliveryCharge, entity.getTotal());
     }
 
      public OrderTestData withId(String id) {

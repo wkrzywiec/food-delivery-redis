@@ -1,6 +1,8 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
+import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -9,10 +11,7 @@ import org.hibernate.annotations.Type;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static io.wkrzywiec.fooddelivery.ordering.OrderStatus.*;
 import static java.lang.String.format;
@@ -27,19 +26,23 @@ class Order {
     private String id;
     private String customerId;
     private String restaurantId;
-    private OrderStatus status = CREATED;
+    private OrderStatus status;
     private String address;
     @Type(type = "io.wkrzywiec.fooddelivery.ordering.ItemType")
     private List<Item> items;
-    private BigDecimal deliveryCharge = new BigDecimal(0);
+    private BigDecimal deliveryCharge;
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
     @Type(type = "io.wkrzywiec.fooddelivery.commons.infra.repository.MapJsonbType")
-    private Map<String, String> metadata = new HashMap<>();
+    private Map<String, String> metadata;
 
     private Order() {}
 
     private Order(String id, String customerId, String restaurantId, List<Item> items, String address, BigDecimal deliveryCharge) {
+        this(id, customerId, restaurantId, CREATED, address, items, deliveryCharge, BigDecimal.ZERO, new HashMap<>());
+    }
+
+    private Order(String id, String customerId, String restaurantId, OrderStatus status, String address, List<Item> items, BigDecimal deliveryCharge, BigDecimal tip, Map<String, String> metadata) {
         if (id == null) {
             this.id = UUID.randomUUID().toString();
         } else {
@@ -47,9 +50,13 @@ class Order {
         }
         this.customerId = customerId;
         this.restaurantId = restaurantId;
-        this.items = items;
+        this.status = status;
         this.address = address;
+        this.items = items;
         this.deliveryCharge = deliveryCharge;
+        this.tip = tip;
+        this.metadata = metadata;
+        this.calculateTotal();
     }
 
     static Order from(CreateOrder createOrder) {
@@ -57,14 +64,74 @@ class Order {
                 createOrder.orderId(),
                 createOrder.customerId(),
                 createOrder.restaurantId(),
-                createOrder.items().stream().map(dto -> Item.builder()
-                        .name(dto.name())
-                        .amount(dto.amount())
-                        .pricePerItem(dto.pricePerItem())
-                        .build()).toList(),
+                mapItems(createOrder.items()),
                 createOrder.address(),
                 createOrder.deliveryCharge());
-        order.calculateTotal();
+
+        return order;
+    }
+
+    private static List<Item> mapItems(List<io.wkrzywiec.fooddelivery.commons.incoming.Item> items) {
+        return items.stream().map(dto -> Item.builder()
+                .name(dto.name())
+                .amount(dto.amount())
+                .pricePerItem(dto.pricePerItem())
+                .build()).toList();
+    }
+
+    static Order from(List<DomainMessageBody> events) {
+        Order order = null;
+        for (DomainMessageBody event: events) {
+            if (event instanceof OrderCreated created) {
+                order = new Order(
+                        created.orderId(), created.customerId(),
+                        created.restaurantId(), mapItems(created.items()),
+                        created.address(), created.deliveryCharge()
+                );
+            }
+
+            if (event instanceof OrderCanceled canceled) {
+                var meta = order.getMetadata();
+                meta.put("cancellationReason", canceled.reason());
+                order = new Order(
+                        order.getId(), order.getCustomerId(),
+                        order.getRestaurantId(), CANCELED,
+                        order.getAddress(), order.getItems(),
+                        order.getDeliveryCharge(), order.getTip(),
+                        meta
+                );
+            }
+
+            if (event instanceof OrderInProgress) {
+                order = new Order(
+                        order.getId(), order.getCustomerId(),
+                        order.getRestaurantId(), IN_PROGRESS,
+                        order.getAddress(), order.getItems(),
+                        order.getDeliveryCharge(), order.getTip(),
+                        order.getMetadata()
+                );
+            }
+
+            if (event instanceof TipAddedToOrder tipAdded) {
+                order = new Order(
+                        order.getId(), order.getCustomerId(),
+                        order.getRestaurantId(), order.getStatus(),
+                        order.getAddress(), order.getItems(),
+                        order.getDeliveryCharge(), tipAdded.tip(),
+                        order.getMetadata()
+                );
+            }
+
+            if (event instanceof OrderCompleted) {
+                order = new Order(
+                        order.getId(), order.getCustomerId(),
+                        order.getRestaurantId(), COMPLETED,
+                        order.getAddress(), order.getItems(),
+                        order.getDeliveryCharge(), order.getTip(),
+                        order.getMetadata()
+                );
+            }
+        }
         return order;
     }
 

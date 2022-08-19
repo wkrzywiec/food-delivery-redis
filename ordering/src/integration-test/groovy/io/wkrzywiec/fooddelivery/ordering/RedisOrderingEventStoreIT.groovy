@@ -3,7 +3,7 @@ package io.wkrzywiec.fooddelivery.ordering
 import io.wkrzywiec.fooddelivery.commons.IntegrationTest
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
-import io.wkrzywiec.fooddelivery.commons.infra.repository.EventStore
+import io.wkrzywiec.fooddelivery.commons.infra.repository.RedisEventStore
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderCompleted
 import io.wkrzywiec.fooddelivery.ordering.outgoing.OrderInProgress
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,7 +17,7 @@ import java.time.Instant
 class RedisOrderingEventStoreIT extends IntegrationTest {
 
     @Autowired
-    private EventStore eventStore
+    private RedisEventStore eventStore
 
     def "Store an event in event store"() {
         given:

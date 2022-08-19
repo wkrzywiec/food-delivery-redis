@@ -4,6 +4,7 @@ import com.github.javafaker.Faker
 import io.wkrzywiec.fooddelivery.commons.IntegrationTest
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
+import io.wkrzywiec.fooddelivery.delivery.application.RedisOrdersChannelConsumer
 import io.wkrzywiec.fooddelivery.delivery.incoming.Item
 import io.wkrzywiec.fooddelivery.delivery.incoming.OrderCreated
 import org.springframework.test.context.ActiveProfiles

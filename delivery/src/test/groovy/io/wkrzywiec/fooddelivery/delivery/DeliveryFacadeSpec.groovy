@@ -11,6 +11,7 @@ import io.wkrzywiec.fooddelivery.delivery.incoming.OrderCreated
 import io.wkrzywiec.fooddelivery.commons.incoming.PickUpFood
 import io.wkrzywiec.fooddelivery.commons.incoming.PrepareFood
 import io.wkrzywiec.fooddelivery.commons.incoming.UnAssignDeliveryMan
+import io.wkrzywiec.fooddelivery.delivery.incoming.TipAddedToOrder
 import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryCanceled
 import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryCreated
 import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryManAssigned
@@ -22,6 +23,7 @@ import io.wkrzywiec.fooddelivery.delivery.outgoing.FoodWasPickedUp
 import io.wkrzywiec.fooddelivery.delivery.outgoing.FoodIsReady
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.FakeMessagePublisher
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message
+import io.wkrzywiec.fooddelivery.delivery.outgoing.TipAddedToDelivery
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
@@ -84,6 +86,33 @@ class DeliveryFacadeSpec extends Specification {
             verifyEventHeader(event, delivery.orderId, "DeliveryCreated")
 
             def body = event.body() as DeliveryCreated
+            body == expectedEvent
+        }
+    }
+
+    def "Add tip to delivery"() {
+        given:
+        var delivery = aDelivery()
+        eventStore.store(message("orders", testClock, delivery.deliveryCreated()))
+
+        and:
+        var tipAddedToOrder = new TipAddedToOrder(delivery.orderId, BigDecimal.valueOf(5.55), BigDecimal.valueOf(50))
+
+        when:
+        facade.handle(tipAddedToOrder)
+
+        then: "Event is saved in a store"
+        def expectedEvent = new TipAddedToDelivery(delivery.getOrderId(), BigDecimal.valueOf(5.55), BigDecimal.valueOf(50))
+        def storedEvents = eventStore.getEventsForOrder(delivery.getOrderId())
+        storedEvents.size() == 2
+        storedEvents[1].body() == expectedEvent
+
+        and: "TipAddedToDelivery event is published on 'orders' channel"
+        with(publisher.messages.get(ORDERS_CHANNEL).get(0)) {event ->
+
+            verifyEventHeader(event, delivery.orderId, "TipAddedToDelivery")
+
+            def body = event.body() as TipAddedToDelivery
             body == expectedEvent
         }
     }

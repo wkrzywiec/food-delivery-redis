@@ -61,7 +61,7 @@ public abstract class RedisEventStore implements EventStore {
 
         var streamReadOptions = StreamReadOptions.empty()
                 .block(Duration.ofMillis(1000))
-                .count(5);
+                .count(100);
 
         List<ObjectRecord<String, String>> objectRecords = redisTemplate.opsForStream()
                 .read(String.class, streamReadOptions, StreamOffset.create(stream, ReadOffset.from("0")));

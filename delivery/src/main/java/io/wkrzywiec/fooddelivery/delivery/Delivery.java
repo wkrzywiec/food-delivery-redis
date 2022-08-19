@@ -80,6 +80,7 @@ class Delivery {
     public static Delivery from(List<Message> events) {
         Delivery delivery = null;
         for (Message event: events) {
+            System.out.println(event.body());
             if (event.body() instanceof DeliveryCreated created) {
                 Map<String, String> metadata = new HashMap<>();
                 metadata.put("creationTimestamp", event.header().createdAt().toString());
@@ -89,6 +90,16 @@ class Delivery {
                         created.address(), mapItems(created.items()),
                         created.deliveryCharge(), BigDecimal.ZERO,
                         created.total(), metadata
+                );
+            }
+
+            if (event.body() instanceof TipAddedToDelivery tipAddedToDelivery) {
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), delivery.getDeliveryManId(),
+                        delivery.getStatus(), delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        tipAddedToDelivery.tip(), tipAddedToDelivery.total(), delivery.getMetadata()
                 );
             }
 
@@ -178,6 +189,7 @@ class Delivery {
                 );
             }
         }
+        System.out.println(delivery);
         return delivery;
     }
 
@@ -247,5 +259,10 @@ class Delivery {
         }
 
         this.deliveryManId = null;
+    }
+
+    public void addTip(BigDecimal tip, BigDecimal total) {
+        this.tip = tip;
+        this.total = total;
     }
 }

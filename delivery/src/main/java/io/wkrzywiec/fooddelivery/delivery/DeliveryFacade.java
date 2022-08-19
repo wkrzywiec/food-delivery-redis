@@ -52,6 +52,19 @@ public class DeliveryFacade {
         log.info("New delivery with an orderId: '{}' was created", newDelivery.getOrderId());
     }
 
+    public void handle(TipAddedToOrder tipAddedToOrder) {
+        log.info("Starting adding top for '{}' delivery", tipAddedToOrder.orderId());
+
+        var delivery = findDelivery(tipAddedToOrder.orderId());
+
+        process(
+                delivery,
+                () -> delivery.addTip(tipAddedToOrder.tip(), tipAddedToOrder.total()),
+                new TipAddedToDelivery(delivery.getOrderId(), tipAddedToOrder.tip(), tipAddedToOrder.total()),
+                "Failed to add tip."
+        );
+    }
+
     public void handle(OrderCanceled orderCanceled) {
         log.info("'{}' order was canceled. Canceling delivery", orderCanceled.orderId());
 

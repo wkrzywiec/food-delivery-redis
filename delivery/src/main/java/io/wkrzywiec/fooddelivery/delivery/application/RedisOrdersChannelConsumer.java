@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.delivery.infra;
+package io.wkrzywiec.fooddelivery.delivery.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -51,6 +51,7 @@ public class RedisOrdersChannelConsumer implements RedisStreamListener {
 
             switch (header.type()) {
                 case "OrderCreated" -> facade.handle(mapMessageBody(messageAsJson, OrderCreated.class));
+                case "TipAddedToOrder" -> facade.handle(mapMessageBody(messageAsJson, TipAddedToOrder.class));
                 case "OrderCanceled" -> facade.handle(mapMessageBody(messageAsJson, OrderCanceled.class));
                 case "PrepareFood" -> facade.handle(mapMessageBody(messageAsJson, PrepareFood.class));
                 case "AssignDeliveryMan" -> facade.handle(mapMessageBody(messageAsJson, AssignDeliveryMan.class));

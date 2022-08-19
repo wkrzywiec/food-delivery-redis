@@ -28,6 +28,7 @@ class RedisDeliveryEventStore extends RedisEventStore {
     public Class<? extends DomainMessageBody> getClassType(String type) {
         return switch (type) {
             case "DeliveryCreated" -> DeliveryCreated.class;
+            case "TipAddedToDelivery" -> TipAddedToDelivery.class;
             case "DeliveryCanceled" -> DeliveryCanceled.class;
             case "FoodInPreparation" -> FoodInPreparation.class;
             case "DeliveryManAssigned" -> DeliveryManAssigned.class;

@@ -2,6 +2,7 @@ package io.wkrzywiec.fooddelivery.bff.inbox;
 
 import com.github.sonus21.rqueue.annotation.RqueueListener;
 import io.wkrzywiec.fooddelivery.bff.controller.model.*;
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.*;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
@@ -55,12 +56,12 @@ public class RedisInboxListener {
     @RqueueListener(value = "delivery-inbox:update")
     public void updateDelivery(UpdateDeliveryDTO updateDeliveryDTO) {
         log.info("Received a command to update a delivery: {}", updateDeliveryDTO);
-        var command = command(updateDeliveryDTO.getOrderId(), generateCommand(updateDeliveryDTO));
+        var command = command(updateDeliveryDTO.getOrderId(), commandBody(updateDeliveryDTO));
 
         redisStreamPublisher.send(command);
     }
 
-    private Object generateCommand(UpdateDeliveryDTO updateDeliveryDTO) {
+    private DomainMessageBody commandBody(UpdateDeliveryDTO updateDeliveryDTO) {
         return switch (updateDeliveryDTO.getStatus()) {
             case "prepareFood" -> new PrepareFood(updateDeliveryDTO.getOrderId());
             case "foodReady" -> new FoodReady(updateDeliveryDTO.getOrderId());
@@ -73,23 +74,23 @@ public class RedisInboxListener {
     @RqueueListener(value = "delivery-inbox:delivery-man")
     public void changeDeliveryMan(ChangeDeliveryManDTO changeDeliveryManDTO) {
         log.info("Received a command to set a delivery man for an order: {}", changeDeliveryManDTO);
-        var command = command(changeDeliveryManDTO.getOrderId(), generateCommand(changeDeliveryManDTO));
+        var command = command(changeDeliveryManDTO.getOrderId(), commandBody(changeDeliveryManDTO));
 
         redisStreamPublisher.send(command);
     }
 
-    private Object generateCommand(ChangeDeliveryManDTO changeDeliveryManDTO) {
-        if (changeDeliveryManDTO.getDeliveryManId() == null) {
-            return new UnAssignDeliveryMan(changeDeliveryManDTO.getOrderId());
-        }
-        return new AssignDeliveryMan(changeDeliveryManDTO.getOrderId(), changeDeliveryManDTO.getDeliveryManId());
-    }
-
-    private Message command(String orderId, Object commandBody) {
+    private Message command(String orderId, DomainMessageBody commandBody) {
         return new Message(commandHeader(orderId, commandBody.getClass().getSimpleName()), commandBody);
     }
 
     private Header commandHeader(String orderId, String type) {
         return new Header(UUID.randomUUID().toString(), ORDERS_CHANNEL, type, orderId, clock.instant());
+    }
+
+    private DomainMessageBody commandBody(ChangeDeliveryManDTO changeDeliveryManDTO) {
+        if (changeDeliveryManDTO.getDeliveryManId() == null) {
+            return new UnAssignDeliveryMan(changeDeliveryManDTO.getOrderId());
+        }
+        return new AssignDeliveryMan(changeDeliveryManDTO.getOrderId(), changeDeliveryManDTO.getDeliveryManId());
     }
 }

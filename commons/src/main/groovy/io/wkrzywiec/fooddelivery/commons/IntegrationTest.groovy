@@ -84,6 +84,7 @@ abstract class IntegrationTest extends Specification {
 
         System.out.println("Clearing 'orders' stream from old messages")
         redisTemplate.opsForStream().trim("orders", 0)
+        redisTemplate.opsForStream().trim("ordering::any-id", 0)
     }
 
     static class IntegrationTestContainerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

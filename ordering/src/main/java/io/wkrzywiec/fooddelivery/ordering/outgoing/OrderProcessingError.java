@@ -1,4 +1,6 @@
 package io.wkrzywiec.fooddelivery.ordering.outgoing;
 
-public record OrderProcessingError(String id, String message, String details) {
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
+
+public record OrderProcessingError(String orderId, String message, String details) implements DomainMessageBody {
 }

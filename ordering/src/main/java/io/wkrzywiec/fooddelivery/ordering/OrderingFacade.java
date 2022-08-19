@@ -9,7 +9,6 @@ import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.MessagePublisher;
 import io.wkrzywiec.fooddelivery.commons.infra.repository.EventStore;
-import io.wkrzywiec.fooddelivery.commons.infra.repository.RedisEventStore;
 import io.wkrzywiec.fooddelivery.ordering.incoming.*;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.RequiredArgsConstructor;

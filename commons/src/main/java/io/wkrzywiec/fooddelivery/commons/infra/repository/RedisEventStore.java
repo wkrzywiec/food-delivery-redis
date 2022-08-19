@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,12 +52,12 @@ public abstract class RedisEventStore implements EventStore {
     }
 
     @Override
-    public List<DomainMessageBody> getEventsForOrder(String orderId) {
+    public List<Message> getEventsForOrder(String orderId) {
         log.info("Fetching events from '{}{}' Redis stream", streamPrefix(), orderId);
         return getAllMessagesInStream(streamPrefix() + orderId);
     }
 
-    private List<DomainMessageBody> getAllMessagesInStream(String stream) {
+    private List<Message> getAllMessagesInStream(String stream) {
 
         var streamReadOptions = StreamReadOptions.empty()
                 .block(Duration.ofMillis(1000))
@@ -81,11 +82,20 @@ public abstract class RedisEventStore implements EventStore {
         }
     }
 
-    private DomainMessageBody mapToDomainEvent(JsonNode eventAsJson) {
+    private Message mapToDomainEvent(JsonNode eventAsJson) {
         var eventType = eventAsJson.get("header").get("type").asText();
         var eventBody =  eventAsJson.get("body");
         var classType = getClassType(eventType);
-        return mapEventBody(eventBody, classType);
+        return new Message(mapEventHeader(eventAsJson), mapEventBody(eventBody, classType));
+    }
+
+    private Header mapEventHeader(JsonNode eventAsJson) {
+        try {
+            return objectMapper.treeToValue(eventAsJson.get("header"), Header.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse event header json: {}", eventAsJson);
+            throw new RuntimeException("Parsing error", e);
+        }
     }
 
     private <T extends DomainMessageBody> T mapEventBody(JsonNode eventBody, Class<T> valueType) {

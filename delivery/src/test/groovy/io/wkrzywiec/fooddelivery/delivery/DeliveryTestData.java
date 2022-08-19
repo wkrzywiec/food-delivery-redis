@@ -1,5 +1,6 @@
 package io.wkrzywiec.fooddelivery.delivery;
 
+import io.wkrzywiec.fooddelivery.delivery.outgoing.DeliveryCreated;
 import lombok.Getter;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
@@ -44,6 +45,10 @@ import static java.lang.String.format;
         setValue(delivery, "metadata", metadata);
 
         return delivery;
+    }
+
+    public DeliveryCreated deliveryCreated() {
+        return new DeliveryCreated(orderId, customerId, restaurantId, address, items.stream().map(ItemTestData::dto).toList(), deliveryCharge, total);
     }
 
     DeliveryTestData withOrderId(String orderId) {

@@ -58,7 +58,7 @@ class OrderingFacadeSpec extends Specification {
         def expectedEvent = order.orderCreated()
         def storedEvents = eventStore.getEventsForOrder(order.getId())
         storedEvents.size() == 1
-        storedEvents[0] == expectedEvent
+        storedEvents[0].body() == expectedEvent
 
         and:
         Order.from(storedEvents).getStatus() == OrderStatus.CREATED
@@ -76,7 +76,7 @@ class OrderingFacadeSpec extends Specification {
     def "Cancel an order"() {
         given:
         var order = anOrder()
-        eventStore.store(message("order", testClock, order.orderCreated()))
+        eventStore.store(message("orders", testClock, order.orderCreated()))
 
         and:
         var cancellationReason = "Not hungry anymore"
@@ -89,7 +89,7 @@ class OrderingFacadeSpec extends Specification {
         def expectedEvent = new OrderCanceled(order.getId(), cancellationReason)
         def storedEvents = eventStore.getEventsForOrder(order.getId())
         storedEvents.size() == 2
-        storedEvents[1] == expectedEvent
+        storedEvents[1].body() == expectedEvent
 
         and:
         Order.from(storedEvents).getStatus() == OrderStatus.CANCELED
@@ -106,7 +106,7 @@ class OrderingFacadeSpec extends Specification {
     def "Set order to IN_PROGRESS"() {
         given:
         var order = anOrder()
-        eventStore.store(message("order", testClock, order.orderCreated()))
+        eventStore.store(message("orders", testClock, order.orderCreated()))
 
         and:
         var foodInPreparation = new FoodInPreparation(order.id)
@@ -118,7 +118,7 @@ class OrderingFacadeSpec extends Specification {
         def expectedEvent = new OrderInProgress(order.getId())
         def storedEvents = eventStore.getEventsForOrder(order.getId())
         storedEvents.size() == 2
-        storedEvents[1] == expectedEvent
+        storedEvents[1].body() == expectedEvent
 
         and:
         Order.from(storedEvents).getStatus() == OrderStatus.IN_PROGRESS
@@ -141,7 +141,7 @@ class OrderingFacadeSpec extends Specification {
         var order = anOrder()
                 .withItems(anItem().withPricePerItem(itemCost))
                 .withDeliveryCharge(deliveryCharge)
-        eventStore.store(message("order", testClock, order.orderCreated()))
+        eventStore.store(message("orders", testClock, order.orderCreated()))
 
         and:
         double tip = 20
@@ -154,7 +154,7 @@ class OrderingFacadeSpec extends Specification {
         double total = itemCost + deliveryCharge + tip
         def storedEvents = eventStore.getEventsForOrder(order.getId())
         storedEvents.size() == 2
-        def tipAdded = storedEvents[1] as TipAddedToOrder
+        def tipAdded = storedEvents[1].body() as TipAddedToOrder
         tipAdded.tip().doubleValue() == tip
         tipAdded.total().doubleValue() == total
 
@@ -176,8 +176,8 @@ class OrderingFacadeSpec extends Specification {
     def "Complete an order"() {
         given:
         var order = anOrder()
-        eventStore.store(message("order", testClock, order.orderCreated()))
-        eventStore.store(message("order", testClock, new OrderInProgress(order.getId())))
+        eventStore.store(message("orders", testClock, order.orderCreated()))
+        eventStore.store(message("orders", testClock, new OrderInProgress(order.getId())))
 
         and:
         var foodDelivered = new FoodDelivered(order.id)
@@ -189,7 +189,7 @@ class OrderingFacadeSpec extends Specification {
         def expectedEvent = new OrderCompleted(order.getId())
         def storedEvents = eventStore.getEventsForOrder(order.getId())
         storedEvents.size() == 3
-        storedEvents[2] == expectedEvent
+        storedEvents[2].body() == expectedEvent
 
         and:
         Order.from(storedEvents).getStatus() == OrderStatus.COMPLETED

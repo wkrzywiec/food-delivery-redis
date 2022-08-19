@@ -20,10 +20,7 @@ public class InMemoryEventStore implements EventStore {
     }
 
     @Override
-    public List<DomainMessageBody> getEventsForOrder(String orderId) {
-        return store.getOrDefault(orderId, List.of())
-                .stream()
-                .map(Message::body)
-                .toList();
+    public List<Message> getEventsForOrder(String orderId) {
+        return store.getOrDefault(orderId, List.of());
     }
 }

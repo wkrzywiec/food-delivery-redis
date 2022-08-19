@@ -1,6 +1,9 @@
 package io.wkrzywiec.fooddelivery.delivery;
 
+import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.delivery.incoming.OrderCreated;
+import io.wkrzywiec.fooddelivery.delivery.outgoing.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -35,15 +38,22 @@ class Delivery {
     private Delivery() {};
 
     private Delivery(String orderId, String customerId, String restaurantId, String address, List<Item> items, BigDecimal deliveryCharge, BigDecimal total, Instant creationTimestamp) {
+        this(orderId, customerId, restaurantId, null, DeliveryStatus.CREATED, address, items, deliveryCharge, BigDecimal.ZERO, total, new HashMap<>());
+        this.metadata.put("creationTimestamp", creationTimestamp.toString());
+    }
+
+    private Delivery(String orderId, String customerId, String restaurantId, String deliveryManId, DeliveryStatus status, String address, List<Item> items, BigDecimal deliveryCharge, BigDecimal tip, BigDecimal total, Map<String, String> metadata) {
         this.orderId = orderId;
         this.customerId = customerId;
         this.restaurantId = restaurantId;
+        this.deliveryManId = deliveryManId;
+        this.status = status;
         this.address = address;
         this.items = items;
         this.deliveryCharge = deliveryCharge;
+        this.tip = tip;
         this.total = total;
-        this.status = DeliveryStatus.CREATED;
-        this.metadata.put("creationTimestamp", creationTimestamp.toString());
+        this.metadata = metadata;
     }
 
     public static Delivery from(OrderCreated orderCreated, Instant creationTimestamp) {
@@ -52,11 +62,123 @@ class Delivery {
                 orderCreated.customerId(),
                 orderCreated.restaurantId(),
                 orderCreated.address(),
-                orderCreated.items().stream().map(dto -> new Item(dto.name(), dto.amount(), dto.pricePerItem())).toList(),
+                mapItems(orderCreated.items()),
                 orderCreated.deliveryCharge(),
                 orderCreated.total(),
                 creationTimestamp
         );
+    }
+
+    private static List<Item> mapItems(List<io.wkrzywiec.fooddelivery.delivery.incoming.Item> items) {
+        return items.stream().map(dto -> Item.builder()
+                .name(dto.name())
+                .amount(dto.amount())
+                .pricePerItem(dto.pricePerItem())
+                .build()).toList();
+    }
+
+    public static Delivery from(List<Message> events) {
+        Delivery delivery = null;
+        for (Message event: events) {
+            if (event.body() instanceof DeliveryCreated created) {
+                Map<String, String> metadata = new HashMap<>();
+                metadata.put("creationTimestamp", event.header().createdAt().toString());
+                delivery = new Delivery(
+                        created.orderId(), created.customerId(),
+                        created.restaurantId(), null, DeliveryStatus.CREATED,
+                        created.address(), mapItems(created.items()),
+                        created.deliveryCharge(), BigDecimal.ZERO,
+                        created.total(), metadata
+                );
+            }
+
+            if (event.body() instanceof DeliveryCanceled canceled) {
+                var metadata = delivery.getMetadata();
+                metadata.put("cancellationReason", canceled.reason());
+                metadata.put("cancellationTimestamp", event.header().createdAt().toString());
+
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), delivery.getDeliveryManId(),
+                        DeliveryStatus.CANCELED, delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), metadata
+                );
+            }
+
+            if (event.body() instanceof FoodInPreparation) {
+                var metadata = delivery.getMetadata();
+                metadata.put("foodPreparationTimestamp", event.header().createdAt().toString());
+
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), delivery.getDeliveryManId(),
+                        DeliveryStatus.FOOD_IN_PREPARATION, delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), metadata
+                );
+            }
+
+            if (event.body() instanceof DeliveryManAssigned deliveryManAssigned) {
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), deliveryManAssigned.deliveryManId(),
+                        delivery.getStatus(), delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), delivery.getMetadata()
+                );
+            }
+
+            if (event.body() instanceof DeliveryManUnAssigned deliveryManUnAssigned) {
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), null,
+                        delivery.getStatus(), delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), delivery.getMetadata()
+                );
+            }
+
+            if (event.body() instanceof FoodIsReady) {
+                var metadata = delivery.getMetadata();
+                metadata.put("foodReadyTimestamp", event.header().createdAt().toString());
+
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), delivery.getDeliveryManId(),
+                        DeliveryStatus.FOOD_READY, delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), metadata
+                );
+            }
+
+            if (event.body() instanceof FoodWasPickedUp) {
+                var metadata = delivery.getMetadata();
+                metadata.put("foodPickedUpTimestamp", event.header().createdAt().toString());
+
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), delivery.getDeliveryManId(),
+                        DeliveryStatus.FOOD_PICKED, delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), metadata
+                );
+            }
+
+            if (event.body() instanceof FoodDelivered) {
+                var metadata = delivery.getMetadata();
+                metadata.put("foodDeliveredTimestamp", event.header().createdAt().toString());
+
+                delivery = new Delivery(
+                        delivery.getOrderId(), delivery.getCustomerId(),
+                        delivery.getRestaurantId(), delivery.getDeliveryManId(),
+                        DeliveryStatus.FOOD_DELIVERED, delivery.getAddress(),
+                        delivery.getItems(), delivery.getDeliveryCharge(),
+                        delivery.getTip(), delivery.getTotal(), metadata
+                );
+            }
+        }
+        return delivery;
     }
 
     public void cancel(String reason, Instant cancellationTimestamp) {

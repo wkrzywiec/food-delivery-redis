@@ -4,7 +4,7 @@ import io.vavr.CheckedRunnable;
 import io.vavr.control.Try;
 import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.*;
-import io.wkrzywiec.fooddelivery.delivery.outgoing.Item;
+import io.wkrzywiec.fooddelivery.commons.infra.repository.EventStore;
 import io.wkrzywiec.fooddelivery.delivery.incoming.*;
 import io.wkrzywiec.fooddelivery.delivery.outgoing.*;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Header;
@@ -25,7 +25,7 @@ import static java.lang.String.format;
 public class DeliveryFacade {
 
     private static final String ORDERS_CHANNEL = "orders";
-    private final DeliveryRepository repository;
+    private final EventStore eventStore;
     private final MessagePublisher publisher;
     private final Clock clock;
 
@@ -33,29 +33,33 @@ public class DeliveryFacade {
         log.info("Preparing a delivery for an '{}' order.", orderCreated.orderId());
 
         Delivery newDelivery = Delivery.from(orderCreated, clock.instant());
-        var savedDelivery = repository.save(newDelivery);
+        var deliveryCreated = new DeliveryCreated(
+                newDelivery.getOrderId(),
+                newDelivery.getCustomerId(),
+                newDelivery.getRestaurantId(),
+                newDelivery.getAddress(),
+                newDelivery.getItems().stream().map(i -> new io.wkrzywiec.fooddelivery.delivery.incoming.Item(i.getName(), i.getAmount(), i.getPricePerItem())).toList(),
+                newDelivery.getDeliveryCharge(),
+                newDelivery.getTotal());
 
         Message event = resultingEvent(
-                savedDelivery.getOrderId(),
-                new DeliveryCreated(
-                        savedDelivery.getOrderId(),
-                        savedDelivery.getCustomerId(),
-                        savedDelivery.getRestaurantId(),
-                        savedDelivery.getAddress(),
-                        savedDelivery.getItems().stream().map(i -> new Item(i.getName(), i.getAmount(), i.getPricePerItem())).toList(),
-                        savedDelivery.getDeliveryCharge(),
-                        savedDelivery.getTotal())
+                newDelivery.getOrderId(),
+                deliveryCreated
         );
 
+        eventStore.store(event);
         publisher.send(event);
-        log.info("New delivery with an orderId: '{}' was created", savedDelivery.getOrderId());
+        log.info("New delivery with an orderId: '{}' was created", newDelivery.getOrderId());
     }
 
     public void handle(OrderCanceled orderCanceled) {
         log.info("'{}' order was canceled. Canceling delivery", orderCanceled.orderId());
 
-        var delivery = repository.findByOrderId(orderCanceled.orderId())
-                .orElseThrow(() -> new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.orderId())));
+        var storedEvents = eventStore.getEventsForOrder(orderCanceled.orderId());
+        if (storedEvents.size() == 0) {
+            throw new DeliveryException(format("Failed to cancel a delivery. There is no delivery for an %s order", orderCanceled.orderId()));
+        }
+        var delivery = Delivery.from(storedEvents);
 
         process(
                 delivery,
@@ -145,8 +149,11 @@ public class DeliveryFacade {
     }
 
     private Delivery findDelivery(String orderId) {
-        return repository.findByOrderId(orderId)
-                .orElseThrow(() -> new DeliveryException(format("There is no delivery with an orderId '%s'.", orderId)));
+        var storedEvents = eventStore.getEventsForOrder(orderId);
+        if (storedEvents.size() == 0) {
+            throw new DeliveryException(format("There is no delivery with an orderId '%s'.", orderId));
+        }
+        return Delivery.from(storedEvents);
     }
 
     private void process(Delivery delivery, CheckedRunnable runProcess, DomainMessageBody successEvent, String failureMessage) {
@@ -158,6 +165,7 @@ public class DeliveryFacade {
     private void publishSuccessEvent(String orderId, DomainMessageBody eventObject) {
         log.info("Publishing success event: {}", eventObject);
         Message event = resultingEvent(orderId, eventObject);
+        eventStore.store(event);
         publisher.send(event);
     }
 

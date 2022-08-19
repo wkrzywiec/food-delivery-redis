@@ -2,6 +2,7 @@ package io.wkrzywiec.fooddelivery.ordering;
 
 import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
+import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -79,10 +80,10 @@ class Order {
                 .build()).toList();
     }
 
-    static Order from(List<DomainMessageBody> events) {
+    static Order from(List<Message> events) {
         Order order = null;
-        for (DomainMessageBody event: events) {
-            if (event instanceof OrderCreated created) {
+        for (Message event: events) {
+            if (event.body() instanceof OrderCreated created) {
                 order = new Order(
                         created.orderId(), created.customerId(),
                         created.restaurantId(), mapItems(created.items()),
@@ -90,7 +91,7 @@ class Order {
                 );
             }
 
-            if (event instanceof OrderCanceled canceled) {
+            if (event.body() instanceof OrderCanceled canceled) {
                 var meta = order.getMetadata();
                 meta.put("cancellationReason", canceled.reason());
                 order = new Order(
@@ -102,7 +103,7 @@ class Order {
                 );
             }
 
-            if (event instanceof OrderInProgress) {
+            if (event.body() instanceof OrderInProgress) {
                 order = new Order(
                         order.getId(), order.getCustomerId(),
                         order.getRestaurantId(), IN_PROGRESS,
@@ -112,7 +113,7 @@ class Order {
                 );
             }
 
-            if (event instanceof TipAddedToOrder tipAdded) {
+            if (event.body() instanceof TipAddedToOrder tipAdded) {
                 order = new Order(
                         order.getId(), order.getCustomerId(),
                         order.getRestaurantId(), order.getStatus(),
@@ -122,7 +123,7 @@ class Order {
                 );
             }
 
-            if (event instanceof OrderCompleted) {
+            if (event.body() instanceof OrderCompleted) {
                 order = new Order(
                         order.getId(), order.getCustomerId(),
                         order.getRestaurantId(), COMPLETED,

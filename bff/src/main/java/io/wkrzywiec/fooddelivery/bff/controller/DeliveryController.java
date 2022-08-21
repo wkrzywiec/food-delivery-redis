@@ -6,6 +6,7 @@ import io.wkrzywiec.fooddelivery.bff.inbox.InboxPublisher;
 import io.wkrzywiec.fooddelivery.bff.controller.model.ChangeDeliveryManDTO;
 import io.wkrzywiec.fooddelivery.bff.controller.model.ResponseDTO;
 import io.wkrzywiec.fooddelivery.bff.controller.model.UpdateDeliveryDTO;
+import io.wkrzywiec.fooddelivery.bff.repository.DeliveryViewRepository;
 import io.wkrzywiec.fooddelivery.bff.view.DeliveryView;
 import io.wkrzywiec.fooddelivery.bff.view.outgoing.DeliveryCreated;
 import lombok.RequiredArgsConstructor;
@@ -23,46 +24,24 @@ import static java.util.Optional.ofNullable;
 @RequiredArgsConstructor
 public class DeliveryController {
 
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final DeliveryViewRepository repository;
     private final InboxPublisher inboxPublisher;
     private static final String DELIVERY_INBOX = "delivery-inbox";
 
     @GetMapping("/deliveries")
     ResponseEntity<List<DeliveryView>> getAllDeliveries() {
-        Set<Object> keys = redisTemplate.opsForHash().keys("delivery-view");
-
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries("delivery-view");
-
-        List<DeliveryView> deliveryViews = entries.values().stream()
-                .map(this::mapJsonStringToDeliveryView)
-                .toList();
-
+        var deliveryViews = repository.getAllDeliveryViews();
         return ResponseEntity.ok(deliveryViews);
     }
 
     @GetMapping("/deliveries/{orderId}")
     ResponseEntity<DeliveryView> getDeliveryById(@PathVariable String orderId) {
-        DeliveryView deliveryView = getDeliveryViewById(orderId);
+        var deliveryView = repository.getDeliveryViewById(orderId);
 
-        if (deliveryView == null) {
+        if (deliveryView.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(deliveryView);
-    }
-
-    private DeliveryView getDeliveryViewById(String orderId) {
-        var deliveryViewOptional = ofNullable(redisTemplate.opsForHash().get("delivery-view", orderId));
-        return deliveryViewOptional.map(this::mapJsonStringToDeliveryView)
-                .orElse(null);
-    }
-
-    private DeliveryView mapJsonStringToDeliveryView(Object deliveryView) {
-        try {
-            return objectMapper.readValue((String) deliveryView, DeliveryView.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return ResponseEntity.ok(deliveryView.get());
     }
 
     @PatchMapping("/deliveries/{orderId}")

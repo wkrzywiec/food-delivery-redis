@@ -1,6 +1,5 @@
 package io.wkrzywiec.fooddelivery.delivery;
 
-import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.delivery.incoming.OrderCreated;
 import io.wkrzywiec.fooddelivery.delivery.outgoing.*;
@@ -14,8 +13,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
 import static java.lang.String.format;
 
 @Getter
@@ -80,7 +77,6 @@ class Delivery {
     public static Delivery from(List<Message> events) {
         Delivery delivery = null;
         for (Message event: events) {
-            System.out.println(event.body());
             if (event.body() instanceof DeliveryCreated created) {
                 Map<String, String> metadata = new HashMap<>();
                 metadata.put("creationTimestamp", event.header().createdAt().toString());
@@ -189,7 +185,6 @@ class Delivery {
                 );
             }
         }
-        System.out.println(delivery);
         return delivery;
     }
 

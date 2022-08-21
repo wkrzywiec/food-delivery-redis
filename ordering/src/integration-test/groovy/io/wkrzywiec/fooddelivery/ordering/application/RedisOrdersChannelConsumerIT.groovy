@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.ordering.infra
+package io.wkrzywiec.fooddelivery.ordering.application
 
 import com.github.javafaker.Faker
 import io.wkrzywiec.fooddelivery.commons.IntegrationTest

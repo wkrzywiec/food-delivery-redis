@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.ordering.infra;
+package io.wkrzywiec.fooddelivery.ordering.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,7 +37,6 @@ public class RedisOrdersChannelConsumer implements RedisStreamListener {
 
     @Override
     public String consumer() {
-        //TODO randomize ?
         return "1";
     }
 

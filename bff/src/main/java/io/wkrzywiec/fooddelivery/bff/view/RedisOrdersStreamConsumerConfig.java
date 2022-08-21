@@ -1,4 +1,4 @@
-package io.wkrzywiec.fooddelivery.ordering.infra;
+package io.wkrzywiec.fooddelivery.bff.view;
 
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.redis.RedisMessageConsumerConfig;
 import lombok.extern.slf4j.Slf4j;

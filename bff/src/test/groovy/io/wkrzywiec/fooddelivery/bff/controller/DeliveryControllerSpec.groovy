@@ -4,6 +4,7 @@ import io.wkrzywiec.fooddelivery.bff.controller.model.ChangeDeliveryManDTO
 import io.wkrzywiec.fooddelivery.bff.controller.model.UpdateDeliveryDTO
 import io.wkrzywiec.fooddelivery.bff.inbox.InMemoryInboxPublisher
 import io.wkrzywiec.fooddelivery.bff.inbox.InboxPublisher
+import io.wkrzywiec.fooddelivery.bff.repository.DeliveryViewRepository
 import org.spockframework.spring.SpringBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -26,6 +27,9 @@ class DeliveryControllerSpec extends Specification {
 
     @SpringBean
     private InboxPublisher inboxPublisher = new InMemoryInboxPublisher()
+
+    @SpringBean
+    private DeliveryViewRepository repository = Mock(DeliveryViewRepository)
 
     @Autowired
     private MockMvc mockMvc

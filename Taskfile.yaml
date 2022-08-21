@@ -20,6 +20,7 @@ tasks:
     desc: Spin up dockerized infrastructure (postgres db)
     cmds:
       - docker compose up -d
+      - docker run -it --network food-delivery-app_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
 
   local:
     desc: Run app with infrastructure locally

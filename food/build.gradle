@@ -11,7 +11,7 @@ plugins {
 
 group = 'io.wkrzywiec'
 version = '0.0.1-SNAPSHOT'
-description = 'food-delivery backend for frontend'
+description = 'food-delivery food domain'
 sourceCompatibility = '17'
 
 def activeDevProfiles = 'dev,redis'
@@ -45,8 +45,10 @@ dependencies {
     implementation 'io.vavr:vavr:0.10.4'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.redislabs:jrejson:1.5.0'
     implementation 'com.redislabs:lettusearch:3.1.2'
     implementation 'com.redislabs:spring-redisearch:3.1.2'
+
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation "org.spockframework:spock-core:${spockVersion}"

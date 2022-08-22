@@ -6,7 +6,7 @@
 
 .searchFood {
   /* position: relative; */
-  /* margin-right: 20px; */
+  /* margin-top: 40px; */
 }
 
 .searchFoodLabel {
@@ -21,4 +21,6 @@
 
 .foodSearchResults {
   margin-top: 50px;
+  margin-bottom: 70px;
+  border-bottom: 3px solid grey;
 }

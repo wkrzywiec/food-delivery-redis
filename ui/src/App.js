@@ -14,6 +14,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min";
 function App() {
 
   const [searchData, setSearchData] = useState([])
+  const [basketData, setBasketData] = useState([])
 
   const foodSearch = useRef(null);
   
@@ -40,6 +41,36 @@ function App() {
         });
   }
 
+  function addToBasket(e) {
+    e.preventDefault();
+    console.log('Adding to basket item with id: ' + e.target.id)
+    // setBasketData([])
+
+    const meal = searchData.find( ({id}) => id === e.target.id)
+    console.log(meal)
+
+    const mealInBasket = basketData.find( ({id}) => id === e.target.id)
+    
+    if (mealInBasket) {
+      // mealInBasket.amount = mealInBasket.amount + 1
+      const result = []
+      basketData.forEach(item => {
+        if (item.id === meal.id) {
+          item.amount = item.amount + 1
+        }
+        result.push(item)
+      })
+
+      setBasketData(result)
+
+    } else {
+      meal.amount = 1
+      setBasketData([...basketData, meal])
+    }
+
+    
+  }
+
 
 
   return (
@@ -48,7 +79,10 @@ function App() {
         <Row className="header">
           <Col><h1>Food Delivery</h1></Col>
         </Row>
-        
+
+        <Row>
+          <Col><h3>Find meals</h3></Col>
+        </Row>
         <Form>
           <Row>
             <Col className="searchFood">
@@ -64,8 +98,8 @@ function App() {
             </Col>
           </Row>
         </Form>
-
         <Row className="foodSearchResults">
+          Results:
           <Table striped bordered hover>
             <thead>
               <tr>
@@ -79,7 +113,33 @@ function App() {
                     <tr key={i}>
                         <td>{item.name}</td>
                         <td>{item.pricePerItem}</td>
-                        <td><Button variant="primary" type="submit" className="searchFoodContent">Add</Button></td>
+                        <td><Button variant="primary" type="submit" id={item.id} onClick={addToBasket}>Add</Button></td>
+                    </tr>
+                ))}
+            </tbody>
+          </Table>
+        </Row>
+
+        <Row>
+          <Col><h3>Current order</h3></Col>
+        </Row>
+        <Row className="foodSearchResults">
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {basketData.map((item, i) => (
+                    <tr key={i}>
+                        <td>{item.name}</td>
+                        <td>{item.pricePerItem}</td>
+                        <td>{item.amount}</td>
+                        <td><Button variant="danger" type="submit">Remove</Button></td>
                     </tr>
                 ))}
             </tbody>

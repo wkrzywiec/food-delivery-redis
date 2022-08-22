@@ -1,0 +1,20 @@
+.header {
+  margin-top: 50px;
+  margin-bottom: 70px;
+  border-bottom: 3px solid grey;
+}
+
+.searchFood {
+  position: relative;
+  margin-right: 20px;
+}
+
+.searchFoodLabel {
+  margin-bottom: 50px;
+}
+
+.searchFoodContent {
+  position: absolute;
+  bottom: 0;
+  left: 10;
+}

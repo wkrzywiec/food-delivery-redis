@@ -45,6 +45,7 @@ function App() {
     e.preventDefault();
     console.log('Adding to basket item with id: ' + e.target.id)
     // setBasketData([])
+    console.log(basketData)
 
     const meal = searchData.find( ({id}) => id === e.target.id)
     console.log(meal)
@@ -52,7 +53,6 @@ function App() {
     const mealInBasket = basketData.find( ({id}) => id === e.target.id)
     
     if (mealInBasket) {
-      // mealInBasket.amount = mealInBasket.amount + 1
       const result = []
       basketData.forEach(item => {
         if (item.id === meal.id) {
@@ -67,10 +67,26 @@ function App() {
       meal.amount = 1
       setBasketData([...basketData, meal])
     }
-
-    
   }
 
+  function removeFromBasket(e) {
+    e.preventDefault();
+    console.log('Removing item from basket with id: ' + e.target.id)
+
+
+    var result = []
+    
+    basketData.forEach(item => {
+      if (item.id === e.target.id) {
+        console.log('Removing item from basket')
+        console.log(item)
+      } else {
+        result.push(item)
+      }
+    })
+
+    setBasketData(result)
+  }
 
 
   return (
@@ -99,7 +115,7 @@ function App() {
           </Row>
         </Form>
         <Row className="foodSearchResults">
-          Results:
+          <h5>Results</h5>
           <Table striped bordered hover>
             <thead>
               <tr>
@@ -124,6 +140,7 @@ function App() {
           <Col><h3>Current order</h3></Col>
         </Row>
         <Row className="foodSearchResults">
+          <h5>Meals</h5>
           <Table striped bordered hover>
             <thead>
               <tr>
@@ -139,7 +156,7 @@ function App() {
                         <td>{item.name}</td>
                         <td>{item.pricePerItem}</td>
                         <td>{item.amount}</td>
-                        <td><Button variant="danger" type="submit">Remove</Button></td>
+                        <td><Button variant="danger" type="submit" id={item.id} onClick={removeFromBasket}>Remove</Button></td>
                     </tr>
                 ))}
             </tbody>

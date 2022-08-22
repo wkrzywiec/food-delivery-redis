@@ -5,16 +5,20 @@
 }
 
 .searchFood {
-  position: relative;
-  margin-right: 20px;
+  /* position: relative; */
+  /* margin-right: 20px; */
 }
 
 .searchFoodLabel {
-  margin-bottom: 50px;
+  /* margin-bottom: 50px; */
 }
 
 .searchFoodContent {
-  position: absolute;
+  /* position: absolute;
   bottom: 0;
-  left: 10;
+  left: 10; */
+}
+
+.foodSearchResults {
+  margin-top: 50px;
 }

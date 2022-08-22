@@ -4,23 +4,12 @@
   border-bottom: 3px solid grey;
 }
 
-.searchFood {
-  /* position: relative; */
-  /* margin-top: 40px; */
-}
-
-.searchFoodLabel {
-  /* margin-bottom: 50px; */
-}
-
-.searchFoodContent {
-  /* position: absolute;
-  bottom: 0;
-  left: 10; */
-}
-
 .foodSearchResults {
   margin-top: 50px;
   margin-bottom: 70px;
   border-bottom: 3px solid grey;
+}
+
+.formStyle {
+  margin-bottom: 30px;
 }

@@ -17,6 +17,8 @@ function App() {
   const [basketData, setBasketData] = useState([])
 
   const foodSearch = useRef(null);
+  const customerId = useRef(null);
+  const address = useRef(null);
   
   function handleFoodSearch(e) {
     e.preventDefault();
@@ -73,7 +75,6 @@ function App() {
     e.preventDefault();
     console.log('Removing item from basket with id: ' + e.target.id)
 
-
     var result = []
     
     basketData.forEach(item => {
@@ -88,12 +89,74 @@ function App() {
     setBasketData(result)
   }
 
+  function placeOrder(e) {
+    e.preventDefault();
+    console.log('Creating an order...')
+
+    const restaurants = ['Pizza place', 'Kebab bar', 'Fast food chain', 'Meals like at home', 'Sushi bar', 'British pub']
+
+    var requestBody = {}
+    requestBody.customerId = customerId.current.value
+    requestBody.address = address.current.value
+    requestBody.items = basketData
+
+    const random = Math.floor(Math.random() * restaurants.length);
+    requestBody.restaurantId = restaurants[random]
+    requestBody.deliveryCharge = 1 + 9 * Math.random()
+
+    console.log(requestBody)
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    }
+
+    fetch('http://localhost:8081/orders', requestOptions)
+        .then(async response => {
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const data = isJson && await response.json();
+
+            // check for error response
+            if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+            }
+
+            console.log(data)
+
+            fetch('http://localhost:8081/deliveries')
+              .then(async response => {
+                const data = await response.json();
+
+                // check for error response
+                if (!response.ok) {
+                    // get error message from body or default to response statusText
+                    const error = (data && data.message) || response.statusText;
+                    return Promise.reject(error);
+                }
+                
+                console.log(data)
+
+              
+              })
+        .catch(error => {
+            console.error('There was an error!', error);
+        });
+        })
+        .catch(error => {
+            this.setState({ errorMessage: error.toString() });
+            console.error('There was an error!', error);
+        });
+  }
+
 
   return (
     <div className="App">
       <Container>
         <Row className="header">
-          <Col><h1>Food Delivery</h1></Col>
+          <Col><h1>Food Delivery 🍉🥨🍗🥦🍙🍰</h1></Col>
         </Row>
 
         <Row>
@@ -139,7 +202,7 @@ function App() {
         <Row>
           <Col><h3>Current order</h3></Col>
         </Row>
-        <Row className="foodSearchResults">
+        <Row>
           <h5>Meals</h5>
           <Table striped bordered hover>
             <thead>
@@ -161,6 +224,22 @@ function App() {
                 ))}
             </tbody>
           </Table>
+        </Row>
+        <Row className="foodSearchResults">
+          <Form className="formStyle">
+            <Form.Group className="mb-3" controlId="formCustomerId">
+              <Form.Label>Customer id</Form.Label>
+              <Form.Control placeholder="Enter your id" ref={customerId} />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="formAddress">
+              <Form.Label>Address</Form.Label>
+              <Form.Control placeholder="Enter your address" ref={address}/>
+            </Form.Group>
+            <Button variant="primary" type="submit" onClick={placeOrder}>
+              Place an order
+            </Button>
+          </Form>
         </Row>
 
       </Container>

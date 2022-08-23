@@ -183,14 +183,28 @@ function App() {
     const index = e.target.value.lastIndexOf('_')
     const orderId = e.target.value.slice(0, index)
     const status = e.target.value.slice(index + 1)
+    var url = ""
+    var requestOptions
 
-    const requestOptions = {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({"status": status})
+    if (status === 'cancel') {
+      url = 'http://localhost:8081/orders/' + orderId + '/status/cancel'
+      requestOptions = {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({"reason": "Canceled by user"})
+      }
+    } else {
+      url = 'http://localhost:8081/deliveries/' + orderId
+      requestOptions = {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({"status": status})
+      }
     }
 
-    fetch('http://localhost:8081/deliveries/' + orderId, requestOptions)
+    
+
+    fetch(url, requestOptions)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             const data = isJson && await response.json();
@@ -204,7 +218,6 @@ function App() {
 
             console.log('Delivery updated')
             console.log(data)
-            // fetchDeliveries()
             window.location.reload();
         })
         .catch(error => {
@@ -339,6 +352,7 @@ function App() {
                         <td>
                           <Form.Select aria-label="Default select example" onChange={changeDeliveryStatus}>
                             <option>Select action</option>
+                            <option value={delivery.orderId + "_cancel"}>Cancel order</option>
                             <option value={delivery.orderId + "_prepareFood"}>Food in preparation</option>
                             <option value={delivery.orderId + "_foodReady"}>Food is ready</option>
                             <option value={delivery.orderId + "_pickUpFood"}>Food is picked up</option>

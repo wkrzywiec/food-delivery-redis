@@ -6,19 +6,61 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Table from 'react-bootstrap/Table';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 
 function App() {
 
+  const [activeDeliveriesData, setActiveDeliveriesData] = useState([])
+  const [completedDeliveriesData, setCompletedDeliveriesData] = useState([])
   const [searchData, setSearchData] = useState([])
   const [basketData, setBasketData] = useState([])
 
   const foodSearch = useRef(null);
   const customerId = useRef(null);
   const address = useRef(null);
+
+  function fetchDeliveries() {
+
+    fetch('http://localhost:8081/deliveries')
+      .then(async response => {
+        const data = await response.json();
+
+        // check for error response
+        if (!response.ok) {
+            // get error message from body or default to response statusText
+            const error = (data && data.message) || response.statusText;
+            return Promise.reject(error);
+        }
+        
+        console.log(data)
+        
+        var active = []
+        var completed = []
+        
+        data.forEach(delivery => {
+            if (delivery.status === 'CANCELED' || delivery.status === 'FOOD_DELIVERED') {
+              completed.push(delivery)
+            } else {
+              active.push(delivery)
+            }
+        })
+
+        setActiveDeliveriesData(active)
+        setCompletedDeliveriesData(completed)
+      
+      })
+      .catch(error => {
+          console.error('There was an error!', error);
+      });
+  }
+
+  
+  useEffect(() => {
+    fetchDeliveries()
+  }, []);
   
   function handleFoodSearch(e) {
     e.preventDefault();
@@ -46,7 +88,6 @@ function App() {
   function addToBasket(e) {
     e.preventDefault();
     console.log('Adding to basket item with id: ' + e.target.id)
-    // setBasketData([])
     console.log(basketData)
 
     const meal = searchData.find( ({id}) => id === e.target.id)
@@ -102,7 +143,8 @@ function App() {
 
     const random = Math.floor(Math.random() * restaurants.length);
     requestBody.restaurantId = restaurants[random]
-    requestBody.deliveryCharge = 1 + 9 * Math.random()
+
+    requestBody.deliveryCharge = Math.round(((1 + 9 * Math.random()) + Number.EPSILON) * 100) / 100;
 
     console.log(requestBody)
 
@@ -124,26 +166,10 @@ function App() {
                 return Promise.reject(error);
             }
 
+            console.log('Order created.')
             console.log(data)
-
-            fetch('http://localhost:8081/deliveries')
-              .then(async response => {
-                const data = await response.json();
-
-                // check for error response
-                if (!response.ok) {
-                    // get error message from body or default to response statusText
-                    const error = (data && data.message) || response.statusText;
-                    return Promise.reject(error);
-                }
-                
-                console.log(data)
-
-              
-              })
-        .catch(error => {
-            console.error('There was an error!', error);
-        });
+            // fetchDeliveries()
+            window.location.reload();
         })
         .catch(error => {
             this.setState({ errorMessage: error.toString() });
@@ -156,11 +182,11 @@ function App() {
     <div className="App">
       <Container>
         <Row className="header">
-          <Col><h1>Food Delivery 🍉🥨🍗🥦🍙🍰</h1></Col>
+          <Col><h1>Food Delivery 🥦🍗🍰</h1></Col>
         </Row>
 
         <Row>
-          <Col><h3>Find meals</h3></Col>
+          <Col><h3>Find meals 🔎</h3></Col>
         </Row>
         <Form>
           <Row>
@@ -183,7 +209,7 @@ function App() {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Price</th>
+                <th>Price [€]</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -200,7 +226,7 @@ function App() {
         </Row>
 
         <Row>
-          <Col><h3>Current order</h3></Col>
+          <Col><h3>Current order 🍔</h3></Col>
         </Row>
         <Row>
           <h5>Meals</h5>
@@ -208,7 +234,7 @@ function App() {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Price</th>
+                <th>Price [€]</th>
                 <th>Amount</th>
                 <th>Action</th>
               </tr>
@@ -240,6 +266,80 @@ function App() {
               Place an order
             </Button>
           </Form>
+        </Row>
+
+        <Row>
+          <Col><h3>Active deliveries 🛵</h3></Col>
+        </Row>
+        <Row className="foodSearchResults">
+          <h5>Meals</h5>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Customer Id</th>
+                <th>Restaurant Id</th>
+                <th>Delivery Man Id</th>
+                <th>Status</th>
+                <th>Address</th>
+                <th>Food</th>
+                <th>Delivery charge [€]</th>
+                <th>Tip [€]</th>
+                <th>Total [€]</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeDeliveriesData.map((delivery, i) => (
+                    <tr key={i}>
+                        <td>{delivery.customerId}</td>
+                        <td>{delivery.restaurantId}</td>
+                        <td>{delivery.deliveryManId}</td>
+                        <td>{delivery.status}</td>
+                        <td>{delivery.address}</td>
+                        <td>{delivery.items.map(i => <div><b>{i.name}</b>, {i.amount} pieces, {i.pricePerItem} €/piece</div>)}</td>
+                        <td>{delivery.deliveryCharge}</td>
+                        <td>{delivery.tip}</td>
+                        <td>{delivery.total}</td>
+                    </tr>
+                ))}
+            </tbody>
+          </Table>
+        </Row>
+
+        <Row>
+          <Col><h3>Completed deliveries 🍽</h3></Col>
+        </Row>
+        <Row className="foodSearchResults">
+          <h5>Meals</h5>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>Customer Id</th>
+                <th>Restaurant Id</th>
+                <th>Delivery Man Id</th>
+                <th>Status</th>
+                <th>Address</th>
+                <th>Food</th>
+                <th>Delivery charge [€]</th>
+                <th>Tip [€]</th>
+                <th>Total [€]</th>
+              </tr>
+            </thead>
+            <tbody>
+              {completedDeliveriesData.map((delivery, i) => (
+                    <tr key={i}>
+                        <td>{delivery.customerId}</td>
+                        <td>{delivery.restaurantId}</td>
+                        <td>{delivery.deliveryManId}</td>
+                        <td>{delivery.status}</td>
+                        <td>{delivery.address}</td>
+                        <td>items</td>
+                        <td>{delivery.deliveryCharge}</td>
+                        <td>{delivery.tip}</td>
+                        <td>{delivery.total}</td>
+                    </tr>
+                ))}
+            </tbody>
+          </Table>
         </Row>
 
       </Container>

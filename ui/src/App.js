@@ -434,7 +434,7 @@ function App() {
                         <td>{delivery.deliveryManId}</td>
                         <td>{delivery.status}</td>
                         <td>{delivery.address}</td>
-                        <td>items</td>
+                        <td>{delivery.items.map(i => <div><b>{i.name}</b>, {i.amount} pieces, {i.pricePerItem} €/piece</div>)}</td>
                         <td>{delivery.deliveryCharge}</td>
                         <td>{delivery.tip}</td>
                         <td>{delivery.total}</td>

@@ -24,7 +24,7 @@ public class DeliveryViewProcessor {
     private final ObjectMapper objectMapper;
 
     void handle(DomainMessageBody event) {
-        log.info("Processing event: {}", event);
+        log.info("Updating delivery view based on event: {}", event);
         DeliveryView deliveryView = getDeliveryView(event);
         deliveryView = updateDeliveryViewModel(event, deliveryView);
         storeViewModel(deliveryView);

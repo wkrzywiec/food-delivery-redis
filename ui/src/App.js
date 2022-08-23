@@ -178,7 +178,6 @@ function App() {
   function changeDeliveryStatus(e) {
     e.preventDefault();
     console.log('Changing delivery status...')
-    console.log(e.target.value)
 
     const index = e.target.value.lastIndexOf('_')
     const orderId = e.target.value.slice(0, index)
@@ -217,6 +216,42 @@ function App() {
             }
 
             console.log('Delivery updated')
+            console.log(data)
+            window.location.reload();
+        })
+        .catch(error => {
+            this.setState({ errorMessage: error.toString() });
+            console.error('There was an error!', error);
+        });
+  }
+
+  function updateDeliveryMan(e) {
+    e.preventDefault();
+    console.log('Changing delivery man...')
+    
+    const index = e.target.value.lastIndexOf('_')
+    const orderId = e.target.value.slice(0, index)
+    const deliveryMan = e.target.value.slice(index + 1)
+
+    var requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({"deliveryManId": deliveryMan})
+    }
+
+    fetch('http://localhost:8081/deliveries/' + orderId + '/delivery-man', requestOptions)
+        .then(async response => {
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const data = isJson && await response.json();
+
+            // check for error response
+            if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+            }
+
+            console.log('Delivery man updated')
             console.log(data)
             window.location.reload();
         })
@@ -342,7 +377,14 @@ function App() {
                     <tr key={i}>
                         <td>{delivery.customerId}</td>
                         <td>{delivery.restaurantId}</td>
-                        <td>{delivery.deliveryManId}</td>
+                        <td>
+                          <Form.Select aria-label="Default select example" onChange={updateDeliveryMan}>
+                            <option>{delivery.deliveryManId}</option>
+                            <option value={delivery.orderId + "_fastest-guy"}>fastest-guy</option>
+                            <option value={delivery.orderId + "_nicest-guy"}>nicest-guy</option>
+                            <option value={delivery.orderId + "_cheapest-guy"}>cheapest-guy</option>
+                          </Form.Select>
+                        </td>
                         <td>{delivery.status}</td>
                         <td>{delivery.address}</td>
                         <td>{delivery.items.map(i => <div><b>{i.name}</b>, {i.amount} pieces, {i.pricePerItem} €/piece</div>)}</td>
@@ -357,7 +399,8 @@ function App() {
                             <option value={delivery.orderId + "_foodReady"}>Food is ready</option>
                             <option value={delivery.orderId + "_pickUpFood"}>Food is picked up</option>
                             <option value={delivery.orderId + "_deliverFood"}>Food delivered</option>
-                          </Form.Select></td>
+                          </Form.Select>
+                        </td>
                     </tr>
                 ))}
             </tbody>

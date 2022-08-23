@@ -146,8 +146,6 @@ function App() {
 
     requestBody.deliveryCharge = Math.round(((1 + 9 * Math.random()) + Number.EPSILON) * 100) / 100;
 
-    console.log(requestBody)
-
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -167,6 +165,44 @@ function App() {
             }
 
             console.log('Order created.')
+            console.log(data)
+            // fetchDeliveries()
+            window.location.reload();
+        })
+        .catch(error => {
+            this.setState({ errorMessage: error.toString() });
+            console.error('There was an error!', error);
+        });
+  }
+
+  function changeDeliveryStatus(e) {
+    e.preventDefault();
+    console.log('Changing delivery status...')
+    console.log(e.target.value)
+
+    const index = e.target.value.lastIndexOf('_')
+    const orderId = e.target.value.slice(0, index)
+    const status = e.target.value.slice(index + 1)
+
+    const requestOptions = {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({"status": status})
+    }
+
+    fetch('http://localhost:8081/deliveries/' + orderId, requestOptions)
+        .then(async response => {
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const data = isJson && await response.json();
+
+            // check for error response
+            if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+            }
+
+            console.log('Delivery updated')
             console.log(data)
             // fetchDeliveries()
             window.location.reload();
@@ -285,6 +321,7 @@ function App() {
                 <th>Delivery charge [€]</th>
                 <th>Tip [€]</th>
                 <th>Total [€]</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -299,6 +336,14 @@ function App() {
                         <td>{delivery.deliveryCharge}</td>
                         <td>{delivery.tip}</td>
                         <td>{delivery.total}</td>
+                        <td>
+                          <Form.Select aria-label="Default select example" onChange={changeDeliveryStatus}>
+                            <option>Select action</option>
+                            <option value={delivery.orderId + "_prepareFood"}>Food in preparation</option>
+                            <option value={delivery.orderId + "_foodReady"}>Food is ready</option>
+                            <option value={delivery.orderId + "_pickUpFood"}>Food is picked up</option>
+                            <option value={delivery.orderId + "_deliverFood"}>Food delivered</option>
+                          </Form.Select></td>
                     </tr>
                 ))}
             </tbody>

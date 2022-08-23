@@ -261,6 +261,42 @@ function App() {
         });
   }
 
+  function addTip(e) {
+    e.preventDefault();
+    console.log('Adding tip...')
+    
+    const index = e.target.value.lastIndexOf('_')
+    const orderId = e.target.value.slice(0, index)
+    const tip = e.target.value.slice(index + 1)
+
+    var requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({"tip": parseFloat(tip)})
+    }
+
+    fetch('http://localhost:8081/orders/' + orderId + '/tip', requestOptions)
+        .then(async response => {
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const data = isJson && await response.json();
+
+            // check for error response
+            if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+            }
+
+            console.log('Tip added')
+            console.log(data)
+            window.location.reload();
+        })
+        .catch(error => {
+            this.setState({ errorMessage: error.toString() });
+            console.error('There was an error!', error);
+        });
+  }
+
 
   return (
     <div className="App">
@@ -360,9 +396,9 @@ function App() {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>Customer Id</th>
-                <th>Restaurant Id</th>
-                <th>Delivery Man Id</th>
+                <th>Customer</th>
+                <th>Restaurant</th>
+                <th>Delivery Man</th>
                 <th>Status</th>
                 <th>Address</th>
                 <th>Food</th>
@@ -389,7 +425,14 @@ function App() {
                         <td>{delivery.address}</td>
                         <td>{delivery.items.map(i => <div><b>{i.name}</b>, {i.amount} pieces, {i.pricePerItem} €/piece</div>)}</td>
                         <td>{delivery.deliveryCharge}</td>
-                        <td>{delivery.tip}</td>
+                        <td>
+                          <Form.Select aria-label="Default select example" onChange={addTip}>
+                            <option>{delivery.tip}</option>
+                            <option value={delivery.orderId + "_2.99"}>2.99</option>
+                            <option value={delivery.orderId + "_5.99"}>5.99</option>
+                            <option value={delivery.orderId + "_9.99"}>9.99</option>
+                          </Form.Select>
+                        </td>
                         <td>{delivery.total}</td>
                         <td>
                           <Form.Select aria-label="Default select example" onChange={changeDeliveryStatus}>
@@ -415,9 +458,9 @@ function App() {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>Customer Id</th>
-                <th>Restaurant Id</th>
-                <th>Delivery Man Id</th>
+                <th>Customer</th>
+                <th>Restaurant</th>
+                <th>Delivery Man</th>
                 <th>Status</th>
                 <th>Address</th>
                 <th>Food</th>

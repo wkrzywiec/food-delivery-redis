@@ -1,16 +1,18 @@
 services:
-  postgres:
-    image: postgres:14-alpine
-    container_name: postgres
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./infra/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    ports:
-      - 5432:5432
+
+  bff:
+    container_name: bff
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        app_name: bff
     environment:
-      - POSTGRES_DB=food_delivery
-      - POSTGRES_USER=food_delivery
-      - POSTGRES_PASSWORD=food_delivery
+      - SPRING_REDIS_HOST=redis
+    ports:
+      - 8081:8080
+    depends_on:
+      - redis
 
   redis:
     image: redis/redis-stack:latest
@@ -25,4 +27,3 @@ services:
 
 volumes:
   redis-data:
-  postgres-data:

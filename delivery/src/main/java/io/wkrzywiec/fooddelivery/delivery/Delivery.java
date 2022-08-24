@@ -6,7 +6,6 @@ import io.wkrzywiec.fooddelivery.delivery.outgoing.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,7 +28,6 @@ class Delivery {
     private BigDecimal deliveryCharge = new BigDecimal(0);
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
-    @Type(type = "io.wkrzywiec.fooddelivery.commons.infra.repository.MapJsonbType")
     private Map<String, String> metadata = new HashMap<>();
 
     private Delivery() {};

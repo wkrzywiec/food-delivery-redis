@@ -7,10 +7,3 @@ management:
 spring:
   application:
     name: 'food-delivery_delivery'
-  datasource:
-    driver-class-name: io.wkrzywiec.fooddelivery.commons.infra.repository.JsonbPostgreSQLDialect
-  jpa:
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true

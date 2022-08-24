@@ -4,12 +4,6 @@ spring:
       matching-strategy: ant_path_matcher
   application:
     name: 'food-delivery_bff'
-  datasource:
-    url: jdbc:h2:mem:bff
-    username: sa
-    password: password
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
 
 management:
   endpoints:

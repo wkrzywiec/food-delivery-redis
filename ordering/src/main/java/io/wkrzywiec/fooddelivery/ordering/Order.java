@@ -1,40 +1,32 @@
 package io.wkrzywiec.fooddelivery.ordering;
 
-import io.wkrzywiec.fooddelivery.commons.event.DomainMessageBody;
 import io.wkrzywiec.fooddelivery.commons.incoming.CreateOrder;
 import io.wkrzywiec.fooddelivery.commons.infra.messaging.Message;
 import io.wkrzywiec.fooddelivery.ordering.outgoing.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.hibernate.annotations.Type;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 import java.math.BigDecimal;
 import java.util.*;
 
 import static io.wkrzywiec.fooddelivery.ordering.OrderStatus.*;
 import static java.lang.String.format;
 
-@Entity
 @Getter
 @EqualsAndHashCode
 @ToString
 class Order {
 
-    @Id
     private String id;
     private String customerId;
     private String restaurantId;
     private OrderStatus status;
     private String address;
-    @Type(type = "io.wkrzywiec.fooddelivery.ordering.ItemType")
     private List<Item> items;
     private BigDecimal deliveryCharge;
     private BigDecimal tip = new BigDecimal(0);
     private BigDecimal total = new BigDecimal(0);
-    @Type(type = "io.wkrzywiec.fooddelivery.commons.infra.repository.MapJsonbType")
     private Map<String, String> metadata;
 
     private Order() {}

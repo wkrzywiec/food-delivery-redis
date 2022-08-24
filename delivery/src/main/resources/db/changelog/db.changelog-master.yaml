@@ -1,3 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/001-add-delivery-table.sql

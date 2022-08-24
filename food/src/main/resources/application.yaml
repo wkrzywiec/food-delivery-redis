@@ -4,12 +4,6 @@ spring:
       matching-strategy: ant_path_matcher
   application:
     name: 'food-delivery_food'
-  datasource:
-    url: jdbc:h2:mem:bff
-    username: sa
-    password: password
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
 
 management:
   endpoints:
@@ -23,9 +17,6 @@ server:
 
 spring:
   profiles: dev
-  redis:
-    host: localhost
-    port: 6379
 ---
 spring:
   profiles: prod

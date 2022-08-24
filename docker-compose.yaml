@@ -4,13 +4,51 @@ services:
     container_name: bff
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
       args:
         app_name: bff
-    environment:
-      - SPRING_REDIS_HOST=redis
+    env_file: .env
     ports:
       - 8081:8080
+    depends_on:
+      - redis
+
+  food:
+    container_name: food
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        app_name: food
+    env_file: .env
+    ports:
+      - 8084:8080
+    depends_on:
+      - redis
+
+  ordering:
+    container_name: ordering
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        app_name: ordering
+    env_file: .env
+    ports:
+      - 8082:8080
+    depends_on:
+      - redis
+
+  delivery:
+    container_name: delivery
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        app_name: delivery
+    env_file: .env
+    ports:
+      - 8083:8080
     depends_on:
       - redis
 

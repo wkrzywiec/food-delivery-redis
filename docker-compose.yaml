@@ -1,5 +1,15 @@
 services:
 
+  ui:
+    container_name: ui
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - 80:80
+    depends_on:
+      - bff
+
   bff:
     container_name: bff
     build:

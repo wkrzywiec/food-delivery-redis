@@ -73,7 +73,7 @@ do
 
   if [[ $bff_code -eq "200" && $ordering_code -eq "200" && $delivery_code -eq "200" ]] ; then
     printf "\n'bff', 'ordering' and 'delivery' services are up. Inserting initial orders...\n"
-    sleep 10
+    sleep 5
 
     printf "\nAdding orders...\n"
     create_order "order-1.json"

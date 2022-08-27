@@ -62,8 +62,9 @@ public class RedisOrdersChannelConsumer implements RedisStreamListener {
 
             if (event == null) {
                 log.info("There is no delivery view handling logic for {} message.", header.type());
+            } else {
+                processor.handle(event);
             }
-            processor.handle(event);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

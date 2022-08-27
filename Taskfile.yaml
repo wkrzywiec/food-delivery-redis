@@ -20,7 +20,7 @@ tasks:
     desc: Spin up dockerized infrastructure (postgres db)
     cmds:
       - docker compose up -d redis
-      - docker run --rm -it --network food-delivery-app_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
+      - docker run --rm -it --network food-delivery-redis_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
 
   run:
     desc: Run all services in Docker
@@ -52,5 +52,5 @@ tasks:
     desc: Stop and clean all persisted data
     cmds:
       - task: infra-down
-      - docker volume rm food-delivery-app_redis-data
+      - docker volume rm food-delivery-redis_redis-data
       - echo "Docker volumes cleaned."

@@ -19,14 +19,14 @@ tasks:
   infra:
     desc: Spin up dockerized infrastructure (postgres db)
     cmds:
-      - docker compose up -d redis
+      - docker-compose up -d redis
       - docker run --rm -it --network food-delivery-redis_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
 
   run:
     desc: Run all services in Docker
     cmds:
       - task: infra
-      - docker compose up -d bff ordering delivery food ui
+      - docker-compose up -d bff ordering delivery food ui
 
   init:
     desc: Run all services in Docker for the 1st time
@@ -45,7 +45,7 @@ tasks:
   infra-down:
     desc: Stop infrastructure
     cmds:
-      - docker compose down
+      - docker-compose down --rmi
       - echo "All infra apps stopped."
 
   infra-clean:

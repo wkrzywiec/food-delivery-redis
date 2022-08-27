@@ -1,6 +1,6 @@
 # Food Delivery app
 
-This is a very simple food delivery distributed system. It allows to search for food and then order them with a delivery.
+This is a very simple food delivery, event-driven distributed system. It allows to search for food and then order them with a delivery.
 
 ![image-1](/docs/image-1.png)
 ![image-2](/docs/image-2.png)
@@ -31,6 +31,8 @@ Here is the overview of a system architecture with used Redis modules:
 
 ### How the data is stored:
 
+Most communication is based on events, stored in a common `orders` stream.
+
 Refer to [this example](https://github.com/redis-developer/basic-analytics-dashboard-redis-bitmaps-nodejs#how-the-data-is-stored) for a more detailed example of what you need for this section.
 
 ### How the data is accessed:
@@ -39,15 +41,62 @@ Refer to [this example](https://github.com/redis-developer/basic-analytics-dashb
 
 ## How to run it locally?
 
-[Make sure you test this with a fresh clone of your repo, these instructions will be used to judge your app.]
-
 ### Prerequisites
 
-[Fill out with any prerequisites (e.g. Node, Docker, etc.). Specify minimum versions]
+* Docker
 
 ### Local installation
 
-[Insert instructions for local installation]
+#### Vanilla
+
+Run all commands in a terminal:
+
+1. Start redis
+```bash
+docker-compose up -d redis
+```
+
+2. Create `food-idx`
+```bash
+docker run --rm -it --network food-delivery-redis_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
+```
+
+3. Start all services
+```bash
+docker-compose up -d bff ordering delivery food ui
+```
+
+4. Run script to populate Redis with initial data
+```bash
+bash init-data.sh
+```
+
+##### Shutting down
+
+1. Stop all containers
+```bash
+docker-compose down --rmi 
+```
+2. Clean data:
+```bash
+docker volume rm food-delivery-redis_redis-data 
+```
+
+#### With Taskfile
+
+In case you've got installed [Taskfile](https://taskfile.dev) just run the command:
+
+```bash
+task init
+```
+
+##### Shutting down
+
+Run a command:
+
+```bash
+task infra-clean
+```
 
 ## More Information about Redis Stack
 

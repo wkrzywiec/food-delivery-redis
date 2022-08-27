@@ -1,0 +1,24 @@
+{
+  "id": "order-3",
+  "customerId": "Dwight Kurt Schrute III",
+  "restaurantId": "Pizza by Alfredo",
+  "items": [
+    {
+      "name": "Farmer Pizza",
+      "amount": 10,
+      "pricePerItem": 15.99
+    },
+    {
+      "name": "Tiramisu",
+      "amount": 2,
+      "pricePerItem": 4.49
+    },
+    {
+      "name": "Orange juice",
+      "amount": 10,
+      "pricePerItem": 1.99
+    }
+  ],
+  "address": "Schrute Farm",
+  "deliveryCharge": 12.99
+}

@@ -1,0 +1,19 @@
+{
+  "id": "order-2",
+  "customerId": "Pam Beesly",
+  "restaurantId": "Ristorante Da Aldo",
+  "items": [
+    {
+      "name": "Lemony Asparagus Penne",
+      "amount": 1,
+      "pricePerItem": 9.49
+    },
+    {
+      "name": "Tea",
+      "amount": 1,
+      "pricePerItem": 1.99
+    }
+  ],
+  "address": "Cottage Avenue 11",
+  "deliveryCharge": 1.99
+}

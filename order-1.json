@@ -1,0 +1,29 @@
+{
+  "id": "order-1",
+  "customerId": "Jim Halpert",
+  "restaurantId": "Pizza Hut",
+  "items": [
+    {
+      "name": "Cheesy Pizza",
+      "amount": 1,
+      "pricePerItem": 14.99
+    },
+    {
+      "name": "Hawaiian Pizza",
+      "amount": 2,
+      "pricePerItem": 14.99
+    },
+    {
+      "name": "Lemon cake",
+      "amount": 1,
+      "pricePerItem": 4.49
+    },
+    {
+      "name": "White Wine",
+      "amount": 4,
+      "pricePerItem": 3.49
+    }
+  ],
+  "address": "Main Road 2",
+  "deliveryCharge": 7.99
+}

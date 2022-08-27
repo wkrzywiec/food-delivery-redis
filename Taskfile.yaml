@@ -19,11 +19,23 @@ tasks:
   infra:
     desc: Spin up dockerized infrastructure (postgres db)
     cmds:
-      - docker compose up -d
-      - docker run -it --network food-delivery-app_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
+      - docker compose up -d redis
+      - docker run --rm -it --network food-delivery-app_default redis redis-cli -h redis FT.CREATE food-idx ON JSON PREFIX 1 "food:" SCHEMA $.name AS name TEXT
+
+  run:
+    desc: Run all services in Docker
+    cmds:
+      - task: infra
+      - docker compose up -d bff ordering delivery food ui
+
+  init:
+    desc: Run all services in Docker for the 1st time
+    cmds:
+      - task: run
+      - bash init-data.sh
 
   local:
-    desc: Run app with infrastructure locally
+    desc: Run backend apps with gradle
     cmds:
       - task: infra
       - echo "Starting food-delivery app..."
@@ -40,6 +52,5 @@ tasks:
     desc: Stop and clean all persisted data
     cmds:
       - task: infra-down
-      - docker volume rm food-delivery-app_postgres-data
       - docker volume rm food-delivery-app_redis-data
       - echo "Docker volumes cleaned."

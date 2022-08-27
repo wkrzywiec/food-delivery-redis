@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Pizza Margherita",
+    "pricePerItem": 10.99
+  },
+  {
+    "name": "Pizza Pepperoni",
+    "pricePerItem": 12.99
+  },
+  {
+    "name": "Pizza Classica",
+    "pricePerItem": 12.99
+  },
+  {
+    "name": "Pizza Americana",
+    "pricePerItem": 12.99
+  },
+  {
+    "name": "Cottage Pizza",
+    "pricePerItem": 14.99
+  },
+  {
+    "name": "Cheesy Pizza",
+    "pricePerItem": 14.99
+  },
+  {
+    "name": "Hawaiian Pizza",
+    "pricePerItem": 14.99
+  },
+  {
+    "name": "Greek Pizza",
+    "pricePerItem": 14.99
+  },
+  {
+    "name": "Hot Pepperoni Pizza",
+    "pricePerItem": 14.99
+  },
+  {
+    "name": "Farmer Pizza",
+    "pricePerItem": 15.99
+  },
+  {
+    "name": "Carbonara Pizza",
+    "pricePerItem": 15.49
+  },
+  {
+    "name": "Prosciutto Pizza",
+    "pricePerItem": 14.99
+  },
+  {
+    "name": "Spaghetti Bolognese",
+    "pricePerItem": 11
+  },
+  {
+    "name": "Spaghetti Carbonara",
+    "pricePerItem": 12
+  },
+  {
+    "name": "Tagliatelle Carbonara",
+    "pricePerItem": 9.99
+  },
+  {
+    "name": "Tagliatelle con pollo",
+    "pricePerItem": 10.30
+  },
+  {
+    "name": "Tagliatelle con pesto verde",
+    "pricePerItem": 10.30
+  },
+  {
+    "name": "Lasagne Bolognese",
+    "pricePerItem": 20.99
+  },
+  {
+    "name": "Garlic Chicken Penne",
+    "pricePerItem": 8.99
+  },
+  {
+    "name": "Roasted Red Pepper Pesto Penne",
+    "pricePerItem": 9.49
+  },
+  {
+    "name": "Spinach Pesto Penne with Shrimp and Peas",
+    "pricePerItem": 9.49
+  },
+  {
+    "name": "Lemony Asparagus Penne",
+    "pricePerItem": 9.49
+  },
+  {
+    "name": "Tiramisu",
+    "pricePerItem": 4.49
+  },
+  {
+    "name": "Lemon cake",
+    "pricePerItem": 4.49
+  },
+  {
+    "name": "Cannoli",
+    "pricePerItem": 4.49
+  },
+  {
+    "name": "Panna cotta with cherry",
+    "pricePerItem": 4.49
+  },
+  {
+    "name": "Water",
+    "pricePerItem": 1.49
+  },
+  {
+    "name": "Orange juice",
+    "pricePerItem": 1.99
+  },
+  {
+    "name": "Apple juice",
+    "pricePerItem": 1.99
+  },
+  {
+    "name": "Tea",
+    "pricePerItem": 1.99
+  },
+  {
+    "name": "Coffee",
+    "pricePerItem": 1.99
+  },
+  {
+    "name": "Red Wine",
+    "pricePerItem": 3.49
+  },
+  {
+    "name": "White Wine",
+    "pricePerItem": 3.49
+  }
+]

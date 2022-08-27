@@ -11,6 +11,9 @@ import { useRef, useState, useEffect } from 'react';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 
+const bffUrl = '/api'
+//const bffUrl = 'http://localhost:8081'
+
 function App() {
 
   const [activeDeliveriesData, setActiveDeliveriesData] = useState([])
@@ -24,7 +27,7 @@ function App() {
 
   function fetchDeliveries() {
 
-    fetch('http://localhost:8081/deliveries')
+    fetch(bffUrl  + '/deliveries')
       .then(async response => {
         const data = await response.json();
 
@@ -66,7 +69,7 @@ function App() {
     e.preventDefault();
     console.log('Searching for meals with phrase: ' + foodSearch.current.value)
 
-    fetch('http://localhost:8081/foods?q=' + foodSearch.current.value)
+    fetch(bffUrl + '/foods?q=' + foodSearch.current.value)
         .then(async response => {
             const data = await response.json();
 
@@ -152,7 +155,7 @@ function App() {
       body: JSON.stringify(requestBody)
     }
 
-    fetch('http://localhost:8081/orders', requestOptions)
+    fetch(bffUrl + '/orders', requestOptions)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             const data = isJson && await response.json();
@@ -186,14 +189,14 @@ function App() {
     var requestOptions
 
     if (status === 'cancel') {
-      url = 'http://localhost:8081/orders/' + orderId + '/status/cancel'
+      url = bffUrl + '/orders/' + orderId + '/status/cancel'
       requestOptions = {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({"reason": "Canceled by user"})
       }
     } else {
-      url = 'http://localhost:8081/deliveries/' + orderId
+      url = bffUrl + '/deliveries/' + orderId
       requestOptions = {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -239,7 +242,7 @@ function App() {
       body: JSON.stringify({"deliveryManId": deliveryMan})
     }
 
-    fetch('http://localhost:8081/deliveries/' + orderId + '/delivery-man', requestOptions)
+    fetch(bffUrl + '/deliveries/' + orderId + '/delivery-man', requestOptions)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             const data = isJson && await response.json();
@@ -275,7 +278,7 @@ function App() {
       body: JSON.stringify({"tip": parseFloat(tip)})
     }
 
-    fetch('http://localhost:8081/orders/' + orderId + '/tip', requestOptions)
+    fetch(bffUrl + '/orders/' + orderId + '/tip', requestOptions)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             const data = isJson && await response.json();

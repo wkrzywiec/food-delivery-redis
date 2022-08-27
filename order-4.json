@@ -1,0 +1,39 @@
+{
+  "id": "order-4",
+  "customerId": "Micheal Scott",
+  "restaurantId": "Pizza by Alfredo",
+  "items": [
+    {
+      "name": "Pizza Pepperoni",
+      "amount": 3,
+      "pricePerItem": 12.99
+    },
+    {
+      "name": "Cottage Pizza",
+      "amount": 2,
+      "pricePerItem": 14.99
+    },
+    {
+      "name": "Hawaiian Pizza",
+      "amount": 2,
+      "pricePerItem": 14.99
+    },
+    {
+      "name": "Greek Pizza",
+      "amount": 2,
+      "pricePerItem": 14.99
+    },
+    {
+      "name": "Hot Pepperoni Pizza",
+      "amount": 2,
+      "pricePerItem": 14.99
+    },
+    {
+      "name": "Prosciutto Pizza",
+      "amount": 2,
+      "pricePerItem": 14.99
+    }
+  ],
+  "address": "Dunder Mifflin, Scranton Business Park",
+  "deliveryCharge": 15.19
+}

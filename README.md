@@ -19,9 +19,7 @@ The entire system is made of 5 microservices (1 React, 4 Java/Spring):
 
 Here's a short video that explains the project and how it uses Redis:
 
-[Insert your own video here, and remove the one below]
-
-[![Embed your YouTube video](https://i.ytimg.com/vi/vyxdC1qK4NE/maxresdefault.jpg)](https://www.youtube.com/watch?v=vyxdC1qK4NE)
+[![Watch the video](https://img.youtube.com/vi/j2OgyTJFc14/default.jpg)](https://youtu.be/j2OgyTJFc14)
 
 ## How it works
 
@@ -150,7 +148,7 @@ bash init-data.sh
 
 1. Stop all containers
 ```bash
-docker-compose down --rmi 
+docker-compose down --rmi local
 ```
 2. Clean data:
 ```bash

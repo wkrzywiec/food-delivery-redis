@@ -1,0 +1,27 @@
+{
+  "app_name": "Food delivery app",
+  "description": "A very simple food delivery distributed system. It allows to search for food and then order them with a delivery.",
+  "hidden": false,
+  "rank": 88,
+  "type": "Full App",
+  "contributed_by": "Community",
+  "repo_url": "https://github.com/wkrzywiec/food-delivery-redis",
+  "download_url": "https://github.com/wkrzywiec/food-delivery-redis/archive/refs/heads/main.zip",
+  "hosted_url": "",
+  "quick_deploy": "false",
+  "deploy_buttons": [],
+  "language": ["Java", "JavaScript"],
+  "redis_commands": ["FT.CREATE"],
+  "redis_features": ["json", "search","stream", "hash", "task queue"],
+  "redis_modules": ["RediJSON", "RediSearch"],
+  "app_image_urls": [
+    "https://github.com/wkrzywiec/food-delivery-redis/raw/main/docs/image-1.png?raw=true",
+    "https://github.com/wkrzywiec/food-delivery-redis/raw/main/docs/image-2.png?raw=true",
+    "https://github.com/wkrzywiec/food-delivery-redis/raw/main/docs/image-3.png?raw=true",
+    "https://github.com/wkrzywiec/food-delivery-redis/raw/main/docs/image-4.png?raw=true"
+  ],
+  "youtube_url": "https://youtu.be/j2OgyTJFc14",
+  "special_tags": ["Hackathon"],
+  "verticals": ["Retail", "Technology","Education"],
+  "markdown": "https://raw.githubusercontent.com/wkrzywiec/food-delivery-redis/main/README.md"
+}

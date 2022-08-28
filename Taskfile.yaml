@@ -45,7 +45,7 @@ tasks:
   infra-down:
     desc: Stop infrastructure
     cmds:
-      - docker-compose down --rmi
+      - docker-compose down --rmi local
       - echo "All infra apps stopped."
 
   infra-clean:
